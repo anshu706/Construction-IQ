@@ -39,3 +39,4 @@ function loadConfig(): EnvConfig {
 }
 
 export const config = loadConfig();
+

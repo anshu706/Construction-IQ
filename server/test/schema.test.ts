@@ -75,3 +75,4 @@ describe('Phase B: Schema and Seed Integrity', () => {
     expect(seedContent).toContain('bcrypt.hash');
   });
 });
+

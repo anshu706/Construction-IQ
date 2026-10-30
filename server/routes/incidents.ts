@@ -152,3 +152,4 @@ router.delete('/:id', requireAuth, requirePermission('incidents:resolve'), async
 });
 
 export default router;
+

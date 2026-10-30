@@ -165,3 +165,4 @@ router.delete('/:id', requireAuth, requirePermission('invoices:approve'), async 
 });
 
 export default router;
+

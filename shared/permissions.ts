@@ -209,3 +209,4 @@ export const PERMISSION_MATRIX: Record<Role, Record<Action, boolean>> = {
 export function hasPermission(role: Role, action: Action): boolean {
   return PERMISSION_MATRIX[role]?.[action] ?? false;
 }
+

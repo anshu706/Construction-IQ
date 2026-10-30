@@ -99,3 +99,4 @@ export function evaluateWindSafety(windSpeedMph: number, currentCraneHalt: boole
 export function countOpenIncidents(incidents: IncidentInput[]): number {
   return incidents.filter(i => i.status !== 'Resolved').length;
 }
+

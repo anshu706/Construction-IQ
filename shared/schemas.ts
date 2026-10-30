@@ -215,3 +215,4 @@ export const copilotChatSchema = z.object({
   projectId: z.string().uuid('Project ID is required'),
   query: z.string().min(1, 'Query cannot be empty').max(2000, 'Query exceeds 2000 characters'),
 }).strict();
+

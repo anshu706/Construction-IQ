@@ -23,3 +23,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed photo upload pipelines to store and render genuine uploaded files.
 - Enforced server-side validation rejecting cyclic dependencies.
 - Replaced colliding task and invoice sequence IDs with database-backed UUIDs.
+

@@ -7,6 +7,8 @@ import React from 'react';
 import { Task, Invoice, SafetyIncident } from '../types';
 import { Percent, Calendar, IndianRupee, ShieldAlert, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 import { formatINRCompact, TOTAL_PROJECT_BUDGET } from '../currency';
+import { calculateEVM } from '../../server/services/evm';
+import { calculateSafetyStreak, countOpenIncidents } from '../../server/services/safety';
 
 interface MetricCardProps {
   tasks: Task[];
@@ -14,6 +16,9 @@ interface MetricCardProps {
   incidents: SafetyIncident[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  evmMetrics?: any;
+  safetyDaysStreak?: number;
+  projectBudget?: number;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -21,83 +26,84 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   invoices,
   incidents,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  evmMetrics,
+  safetyDaysStreak: propStreak,
+  projectBudget = TOTAL_PROJECT_BUDGET,
 }) => {
-  // 1. CALCULATE OVERALL PROGRESS
+  // Compute EVM if not pre-computed from backend
+  const evm = evmMetrics || calculateEVM(
+    { budgetInr: projectBudget, statusDate: '2026-08-02' },
+    tasks.map(t => ({
+      id: t.id,
+      startDate: t.startDate,
+      endDate: t.endDate,
+      progress: t.progress,
+      budgetedCostInr: (t as any).budgetedCostInr || (projectBudget / Math.max(tasks.length, 1)),
+    })),
+    invoices.map(i => ({
+      id: i.id,
+      amountInr: i.amount || (i as any).amountInr || 0,
+      status: i.status,
+    }))
+  );
+
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Complete').length;
-  const averageProgress = totalTasks > 0
-    ? Math.round(tasks.reduce((acc, t) => acc + t.progress, 0) / totalTasks)
-    : 0;
+  const averageProgress = evm.physicalCompletionPercentage || (
+    totalTasks > 0 ? Math.round(tasks.reduce((acc, t) => acc + t.progress, 0) / totalTasks) : 0
+  );
 
-  // 2. CALCULATE BUDGET
-  const totalBudget = TOTAL_PROJECT_BUDGET;
-  const spent = invoices
-    .filter(inv => inv.status === 'Paid' || inv.status === 'Approved')
-    .reduce((acc, inv) => acc + inv.amount, 0);
-  
-  const spentPercentage = Math.round((spent / totalBudget) * 100);
+  const totalBudget = projectBudget;
+  const spent = evm.ac;
+  const spentPercentage = Math.round(evm.budgetBurnPercentage);
 
-  const ev = (averageProgress / 100) * totalBudget;
-  const ac = spent || 1;
-  const calculatedCpi = Number((ev / ac).toFixed(2));
-  const cpiVal = calculatedCpi > 1.5 ? 1.05 : calculatedCpi < 0.5 ? 0.85 : calculatedCpi;
+  // Real CPI and SPI values without ANY artificial clamping:
+  const cpiVal = evm.cpi !== null ? evm.cpi.toFixed(2) : 'n/a';
+  const spiVal = evm.spi !== null ? evm.spi.toFixed(2) : 'n/a';
 
-  // 3. SCHEDULE PERFORMANCE INDEX (SPI)
-  const today = new Date('2026-08-02').getTime();
-  let totalPV = 0;
-  tasks.forEach(task => {
-    const start = new Date(task.startDate).getTime();
-    const end = new Date(task.endDate).getTime();
-    if (today >= end) {
-      totalPV += 100;
-    } else if (today <= start) {
-      totalPV += 0;
-    } else {
-      const totalDuration = end - start;
-      const elapsed = today - start;
-      totalPV += Math.round((elapsed / totalDuration) * 100);
-    }
-  });
-  const pvAvg = tasks.length > 0 ? totalPV / tasks.length : 1;
-  const evAvg = averageProgress;
-  const calculatedSpi = Number((evAvg / (pvAvg || 1)).toFixed(2));
-  const spiVal = calculatedSpi > 1.3 ? 1.03 : calculatedSpi < 0.6 ? 0.78 : calculatedSpi;
+  const scheduleStatus = evm.spiStatus || (evm.spi === null ? 'n/a' : evm.spi >= 1.0 ? 'Ahead' : evm.spi >= 0.9 ? 'At risk' : 'Delayed');
+  const budgetStatus = evm.cpiStatus || (evm.cpi === null ? 'n/a' : evm.cpi >= 1.0 ? 'Under budget' : evm.cpi >= 0.95 ? 'At risk' : 'Over budget');
 
-  let scheduleStatus: 'On Track' | 'At Risk' | 'Delayed' = 'On Track';
-  if (spiVal < 0.85) scheduleStatus = 'Delayed';
-  else if (spiVal < 0.96) scheduleStatus = 'At Risk';
+  // Compute verifiable safety streak
+  const calculatedStreak = calculateSafetyStreak(
+    { startDate: '2026-06-01', statusDate: '2026-08-02' },
+    incidents.map(i => ({
+      id: i.id,
+      occurredAt: (i as any).occurredAt || i.date,
+      severity: i.severity,
+      type: i.type,
+      status: i.status,
+      isLostTime: (i as any).isLostTime || i.type === 'Lost-Time',
+    }))
+  );
 
-  let budgetStatus: 'Under Budget' | 'On Budget' | 'Over Budget' = 'On Budget';
-  if (cpiVal < 0.95) budgetStatus = 'Over Budget';
-  else if (cpiVal > 1.02) budgetStatus = 'Under Budget';
+  const daysWithoutIncident = propStreak !== undefined ? propStreak : calculatedStreak;
+  const activeIncidents = countOpenIncidents(
+    incidents.map(i => ({
+      id: i.id,
+      occurredAt: (i as any).occurredAt || i.date,
+      severity: i.severity,
+      type: i.type,
+      status: i.status,
+    }))
+  );
 
-  // 4. SAFETY STATUS
-  const activeIncidents = incidents.filter(i => i.status !== 'Resolved').length;
-  
-  const lostTimeIncidents = incidents.filter(i => i.type === 'Lost-Time');
-  let daysWithoutIncident = 42;
-  if (lostTimeIncidents.length > 0) {
-    const sorted = [...lostTimeIncidents].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const lastDate = new Date(sorted[0].date).getTime();
-    const currentDate = new Date('2026-08-02').getTime();
-    const diffTime = Math.abs(currentDate - lastDate);
-    daysWithoutIncident = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  }
-
-  const getBadgeStyle = (type: string) => {
-    switch (type) {
+  const getBadgeStyle = (badgeText: string) => {
+    switch (badgeText) {
       case 'On Track':
-      case 'Under Budget':
+      case 'Under budget':
       case 'Ahead':
       case 'Optimal':
       case 'Normal Rate':
         return 'bg-[#2E7D32]/10 text-[#2E7D32] border border-[#2E7D32]/20';
+      case 'At risk':
       case 'At Risk':
       case 'On Budget':
       case 'Caution':
         return 'bg-[#C5A059]/10 text-[#C5A059] border border-[#C5A059]/20';
       case 'Delayed':
+      case 'Over budget':
       case 'Over Budget':
         return 'bg-[#B71C1C]/10 text-[#B71C1C] border border-[#B71C1C]/20';
       default:
@@ -126,25 +132,25 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             />
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'schedule',
       title: 'Schedule Status',
       value: scheduleStatus,
-      subtitle: `SPI: ${spiVal} (${spiVal >= 1 ? 'Ahead' : 'Lagging'})`,
+      subtitle: `SPI: ${spiVal} (${evm.spi === null ? 'n/a' : evm.spi >= 1 ? 'Ahead' : 'Lagging'})`,
       icon: <Calendar className="w-4 h-4 text-[#A89F91]" />,
-      badge: spiVal >= 1 ? 'Ahead' : 'Delayed',
+      badge: scheduleStatus,
       footer: (
         <div className="flex items-center gap-1.5 mt-4 text-[10px] font-sans uppercase tracking-wider text-[#7A756C]">
-          {spiVal >= 1 ? (
+          {evm.spi !== null && evm.spi >= 1 ? (
             <ArrowUpRight className="w-3.5 h-3.5 text-[#2E7D32] shrink-0" />
           ) : (
             <ArrowDownRight className="w-3.5 h-3.5 text-[#B71C1C] shrink-0" />
           )}
           <span>Critical path evaluated.</span>
         </div>
-      )
+      ),
     },
     {
       id: 'budget',
@@ -168,7 +174,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             />
           </div>
         </div>
-      )
+      ),
     },
     {
       id: 'safety',
@@ -182,8 +188,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <TrendingUp className="w-3.5 h-3.5 text-[#2E7D32] shrink-0" />
           <span>No OSHA non-compliance.</span>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (

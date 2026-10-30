@@ -28,3 +28,4 @@ We enforce the Conventional Commits specification:
 - `chore:` Maintenance, dependency updates, and build tasks
 - `ci:` Continuous integration workflows
 - `docs:` Documentation improvements
+

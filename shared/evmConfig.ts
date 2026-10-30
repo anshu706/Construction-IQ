@@ -32,3 +32,4 @@ export function getSpiStatus(spi: number | null): SpiStatus | null {
   if (spi >= EVM_THRESHOLDS.spi.atRisk) return 'At risk';
   return 'Delayed';
 }
+

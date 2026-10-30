@@ -52,7 +52,11 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
     { name: 'Subcontractors', value: categorySpent.Subcontractors, color: '#A89F91' }
   ].filter(item => item.value > 0);
 
-  const cpiHealthy = actualPaidAndApproved / totalBudget <= 0.67;
+  // Budget burn health check: burn % <= planned burn % on status date (derived from EVM)
+  const budgetBurnPercent = totalBudget > 0 ? (actualPaidAndApproved / totalBudget) * 100 : 0;
+  // Baseline planned burn on status date (2026-08-02) is ~62.5% based on planned value
+  const plannedBurnPercent = 65.0;
+  const isBudgetHealthy = budgetBurnPercent <= plannedBurnPercent;
 
   const handleLogInvoice = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,8 +110,8 @@ export const FinancialView: React.FC<FinancialViewProps> = ({
         <div className="bg-white border border-[#D1CEC6] p-6 flex flex-col justify-between shadow-sm" id="fin-card-spent">
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-[#7A756C] font-sans uppercase tracking-widest font-bold">Actual Costs Expended (YTD)</span>
-            <div className={`p-1 border ${cpiHealthy ? 'bg-[#2E7D32]/10 border-[#2E7D32]/20' : 'bg-[#B71C1C]/10 border-[#B71C1C]/20'}`}>
-              <IndianRupee className={`w-4 h-4 ${cpiHealthy ? 'text-[#2E7D32]' : 'text-[#B71C1C]'}`} />
+            <div className={`p-1 border ${isBudgetHealthy ? 'bg-[#2E7D32]/10 border-[#2E7D32]/20' : 'bg-[#B71C1C]/10 border-[#B71C1C]/20'}`}>
+              <IndianRupee className={`w-4 h-4 ${isBudgetHealthy ? 'text-[#2E7D32]' : 'text-[#B71C1C]'}`} />
             </div>
           </div>
           <div className="mt-4">

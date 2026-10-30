@@ -370,3 +370,4 @@ model ActivityLog {
   @@index([createdAt])
   @@map("activity_log")
 }
+
