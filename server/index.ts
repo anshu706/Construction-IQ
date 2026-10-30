@@ -10,6 +10,18 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import { config } from './config.js';
+import { prisma } from './db.js';
+
+// Route handlers
+import authRoutes from './routes/auth.js';
+import projectRoutes from './routes/projects.js';
+import taskRoutes from './routes/tasks.js';
+import invoiceRoutes from './routes/invoices.js';
+import incidentRoutes from './routes/incidents.js';
+import punchItemRoutes from './routes/punchItems.js';
+import riskRoutes from './routes/risks.js';
+import milestoneRoutes from './routes/milestones.js';
+import logRoutes from './routes/logs.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +53,17 @@ app.use('/uploads', express.static(uploadsPath));
 const distPath = path.resolve(__dirname, '../dist');
 app.use(express.static(distPath));
 
+// API Routers
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/incidents', incidentRoutes);
+app.use('/api/punch-items', punchItemRoutes);
+app.use('/api/risks', riskRoutes);
+app.use('/api/milestones', milestoneRoutes);
+app.use('/api/logs', logRoutes);
+
 // Liveness Health Check
 app.get('/api/health', (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -52,10 +75,15 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// App ready check (will be enhanced in Phase E with DB connection verification)
-app.get('/api/ready', (_req, res) => {
+// Readiness Health Check (validates DB connectivity)
+app.get('/api/ready', async (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ status: 'ready' });
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ready', database: 'connected' });
+  } catch (error) {
+    res.status(503).json({ status: 'unavailable', database: 'disconnected' });
+  }
 });
 
 // Production SPA fallback

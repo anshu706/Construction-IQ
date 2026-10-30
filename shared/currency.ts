@@ -5,6 +5,12 @@
 
 export const USD_TO_INR = 83;
 
+export const PHASE_BASELINES = {
+  excavation: 125_000 * USD_TO_INR,
+  concrete: 260_000 * USD_TO_INR,
+  framing: 550_000 * USD_TO_INR,
+};
+
 export function usdToInr(usd: number): number {
   return Math.round(usd * USD_TO_INR);
 }
