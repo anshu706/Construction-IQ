@@ -1,0 +1,372 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ProjectManager
+  SiteSupervisor
+  FinanceManager
+  SafetyOfficer
+  Executive
+}
+
+enum TaskPhase {
+  Excavation
+  Foundation
+  Framing
+  HVAC_Electrical
+  Finishing
+  Exterior
+}
+
+enum TaskStatus {
+  NotStarted
+  InProgress
+  Complete
+  Delayed
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum InvoiceCategory {
+  Labor
+  Materials
+  Equipment
+  Subcontractors
+}
+
+enum InvoiceStatus {
+  Pending
+  Approved
+  Paid
+  Rejected
+}
+
+enum IncidentSeverity {
+  Minor
+  Moderate
+  Severe
+}
+
+enum IncidentType {
+  FirstAid
+  NearMiss
+  LostTime
+  EquipmentDamage
+}
+
+enum IncidentStatus {
+  Open
+  UnderInvestigation
+  Resolved
+}
+
+enum PunchSeverity {
+  Critical
+  Major
+  Minor
+}
+
+enum PunchStatus {
+  Open
+  InProgress
+  ReadyForInspection
+  Closed
+}
+
+enum RiskLevel {
+  Low
+  Medium
+  High
+}
+
+enum RiskCategory {
+  Schedule
+  Financial
+  Safety
+  External
+  Resource
+}
+
+enum RiskStatus {
+  Monitored
+  Mitigating
+  Resolved
+}
+
+enum MilestoneStatus {
+  OnTrack
+  AtRisk
+  Delayed
+  Complete
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  name          String
+  title         String
+  role          Role
+  passwordHash  String          @map("password_hash")
+  isActive      Boolean         @default(true) @map("is_active")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  memberships   ProjectMember[]
+  photos        Photo[]
+  activityLogs  ActivityLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String    @id
+  userId     String    @map("user_id")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Project {
+  id                String          @id @default(uuid())
+  name              String
+  location          String
+  currency          String          @default("INR")
+  budgetInr         Decimal         @map("budget_inr") @db.Decimal(18, 2)
+  contingencyInr    Decimal         @default(0) @map("contingency_inr") @db.Decimal(18, 2)
+  startDate         DateTime        @map("start_date")
+  plannedFinishDate DateTime        @map("planned_finish_date")
+  statusDate        DateTime        @map("status_date")
+  craneHalt         Boolean         @default(false) @map("crane_halt")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  members           ProjectMember[]
+  tasks             Task[]
+  invoices          Invoice[]
+  incidents         Incident[]
+  punchItems        PunchItem[]
+  photos            Photo[]
+  milestones        Milestone[]
+  risks             Risk[]
+  activityLogs      ActivityLog[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id         String   @id @default(uuid())
+  projectId  String   @map("project_id")
+  userId     String   @map("user_id")
+  role       Role
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Task {
+  id               String       @id @default(uuid())
+  projectId        String       @map("project_id")
+  name             String
+  phase            TaskPhase
+  startDate        DateTime     @map("start_date")
+  endDate          DateTime     @map("end_date")
+  progress         Int          @default(0)
+  status           TaskStatus   @default(NotStarted)
+  priority         Priority     @default(Medium)
+  assignedCrew     String       @map("assigned_crew")
+  budgetedCostInr  Decimal      @default(0) @map("budgeted_cost_inr") @db.Decimal(18, 2)
+  notes            String?
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  dependencies     TaskDependency[] @relation("DependentTasks")
+  dependentOn      TaskDependency[] @relation("PrerequisiteTasks")
+
+  @@index([projectId])
+  @@index([status])
+  @@map("tasks")
+}
+
+model TaskDependency {
+  id                 String   @id @default(uuid())
+  taskId             String   @map("task_id")
+  dependsOnTaskId    String   @map("depends_on_task_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  task               Task     @relation("DependentTasks", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTask      Task     @relation("PrerequisiteTasks", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnTaskId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
+  @@map("task_dependencies")
+}
+
+model Invoice {
+  id           String          @id @default(uuid())
+  projectId    String          @map("project_id")
+  number       String
+  vendor       String
+  category     InvoiceCategory
+  amountInr    Decimal         @map("amount_inr") @db.Decimal(18, 2)
+  status       InvoiceStatus   @default(Pending)
+  invoiceDate  DateTime        @map("invoice_date")
+  description  String
+  approvedBy   String?         @map("approved_by")
+  approvedAt   DateTime?       @map("approved_at")
+  isDeleted    Boolean         @default(false) @map("is_deleted")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, number])
+  @@index([projectId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model Incident {
+  id           String           @id @default(uuid())
+  projectId    String           @map("project_id")
+  occurredAt   DateTime         @map("occurred_at")
+  severity     IncidentSeverity
+  type         IncidentType
+  description  String
+  status       IncidentStatus   @default(Open)
+  actionTaken  String?          @map("action_taken")
+  resolvedAt   DateTime?        @map("resolved_at")
+  isLostTime   Boolean          @default(false) @map("is_lost_time")
+  isDeleted    Boolean          @default(false) @map("is_deleted")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+  @@index([isLostTime])
+  @@map("incidents")
+}
+
+model PunchItem {
+  id              String        @id @default(uuid())
+  projectId       String        @map("project_id")
+  item            String
+  location        String
+  phase           String
+  severity        PunchSeverity
+  subcontractor   String
+  status          PunchStatus   @default(Open)
+  reportedAt      DateTime      @default(now()) @map("reported_at")
+  resolutionNotes String?       @map("resolution_notes")
+  photoId         String?       @map("photo_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  photo           Photo?        @relation(fields: [photoId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([status])
+  @@index([severity])
+  @@map("punch_items")
+}
+
+model Photo {
+  id           String      @id @default(uuid())
+  projectId    String      @map("project_id")
+  uploadedBy   String      @map("uploaded_by")
+  storageKey   String      @map("storage_key")
+  mimeType     String      @map("mime_type")
+  byteSize     Int         @map("byte_size")
+  originalName String      @map("original_name")
+  takenAt      DateTime    @default(now()) @map("taken_at")
+  caption      String?
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploader     User        @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  punchItems   PunchItem[]
+
+  @@index([projectId])
+  @@index([uploadedBy])
+  @@map("photos")
+}
+
+model Milestone {
+  id            String          @id @default(uuid())
+  projectId     String          @map("project_id")
+  name          String
+  dueDate       DateTime        @map("due_date")
+  completedDate DateTime?       @map("completed_date")
+  status        MilestoneStatus @default(OnTrack)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("milestones")
+}
+
+model Risk {
+  id             String       @id @default(uuid())
+  projectId      String       @map("project_id")
+  title          String
+  category       RiskCategory
+  probability    RiskLevel
+  impact         RiskLevel
+  status         RiskStatus   @default(Monitored)
+  mitigationPlan String       @map("mitigation_plan")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("risks")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  actorId   String   @map("actor_id")
+  type      String
+  severity  String
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("activity_log")
+}
