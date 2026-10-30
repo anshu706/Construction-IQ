@@ -1,1 +1,0 @@
-Introducing ConstructIQ: The real-time operations command console for civil infrastructure. Live sensor telemetry, INR budget variance tracking, and 5 role-based command views to keep multi-crore site execution under budget and on schedule. 🏗️📐

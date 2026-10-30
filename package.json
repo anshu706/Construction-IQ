@@ -1,39 +1,57 @@
 {
-  "name": "react-example",
+  "name": "constructiq",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "server:dev": "tsx server.ts",
-    "server:start": "node server.js",
-    "build": "vite build && esbuild server.ts --platform=node --format=esm --packages=external --bundle --outfile=server.js",
-    "start": "npm run build && node server.js",
+    "server:dev": "tsx server/index.ts",
+    "build": "vite build && esbuild server/index.ts --platform=node --format=esm --packages=external --bundle --outfile=dist/server.js",
+    "start": "node dist/server.js",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@prisma/client": "^5.22.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@tanstack/react-query": "^5.62.8",
     "@vitejs/plugin-react": "^5.0.4",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "multer": "^1.4.5-lts.1",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "recharts": "^3.10.1",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.14.0",
+    "@types/supertest": "^6.0.2",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "jsdom": "^25.0.1",
+    "prisma": "^5.22.0",
+    "supertest": "^7.0.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3",
-    "@types/express": "^4.17.21"
+    "vitest": "^2.1.8"
   }
 }

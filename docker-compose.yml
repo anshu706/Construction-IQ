@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: constructiq-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: constructiq
+      POSTGRES_PASSWORD: constructiq_secret
+      POSTGRES_DB: constructiq
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U constructiq -d constructiq']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: constructiq-app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://constructiq:constructiq_secret@db:5432/constructiq?schema=public
+      SESSION_SECRET: constructiq_production_secret_key_minimum_32_characters_long!
+      DEMO_MODE: 'true'
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - app_uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  app_uploads:

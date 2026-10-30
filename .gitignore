@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+server.js
+brag-output/
+uploads/
+.terraform/
+*.tfstate
+*.tfstate.backup
