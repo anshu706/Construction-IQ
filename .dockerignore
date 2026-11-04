@@ -1,0 +1,15 @@
+.git
+node_modules
+dist
+.env
+.env.*
+!.env.example
+coverage
+*.log
+uploads
+brag-output
+assets/*.mp4
+assets/*.gif
+.reticle-setup-crash.log
+metadata.json
+

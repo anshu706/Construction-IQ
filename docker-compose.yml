@@ -1,46 +1,71 @@
-version: '3.8'
+# ConstructIQ – Docker Compose
+# All secrets come from a .env file or shell environment.
+# ${VAR:?message} syntax causes compose to fail loudly if the variable is missing.
 
 services:
   db:
     image: postgres:16-alpine
-    container_name: constructiq-postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: constructiq
-      POSTGRES_PASSWORD: constructiq_secret
       POSTGRES_DB: constructiq
-    ports:
-      - '5432:5432'
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U constructiq -d constructiq']
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d constructiq"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
+    ports:
+      - "127.0.0.1:5432:5432"   # bind to loopback only
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@db:5432/constructiq
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   app:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: constructiq-app
-    restart: always
+      target: runtime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@db:5432/constructiq
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required (minimum 32 chars)}
+      DEMO_MODE: ${DEMO_MODE:-false}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-DemoPass123!}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_MODEL: ${NVIDIA_MODEL:-meta/llama-3.2-11b-vision-instruct}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      UPLOAD_DIR: /app/uploads
+      S3_BUCKET: ${S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "3001:3001"
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - '3001:3001'
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-      DATABASE_URL: postgresql://constructiq:constructiq_secret@db:5432/constructiq?schema=public
-      SESSION_SECRET: constructiq_production_secret_key_minimum_32_characters_long!
-      DEMO_MODE: 'true'
-      UPLOAD_DIR: /app/uploads
-    volumes:
-      - app_uploads:/app/uploads
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3001/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 volumes:
-  postgres_data:
-  app_uploads:
-
+  db_data:
+  uploads:
