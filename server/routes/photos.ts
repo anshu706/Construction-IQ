@@ -27,12 +27,14 @@ const ALLOWED_MAGIC: Array<{ mime: string; bytes: Buffer; offset?: number }> = [
 function validateMagicBytes(buffer: Buffer): string | null {
   for (const sig of ALLOWED_MAGIC) {
     const slice = buffer.subarray(sig.offset ?? 0, (sig.offset ?? 0) + sig.bytes.length);
-    if (slice.equals(sig.bytes)) return sig.mime;
-    // WebP: RIFF????WEBP
-    if (sig.mime === 'image/webp' && slice.equals(sig.bytes)) {
-      const webp = buffer.subarray(8, 12).toString('ascii');
-      if (webp === 'WEBP') return 'image/webp';
+    // WebP: header is RIFF????WEBP — check RIFF first, then confirm WEBP marker at bytes 8-11
+    if (sig.mime === 'image/webp') {
+      if (slice.equals(sig.bytes) && buffer.subarray(8, 12).toString('ascii') === 'WEBP') {
+        return 'image/webp';
+      }
+      continue;
     }
+    if (slice.equals(sig.bytes)) return sig.mime;
   }
   return null;
 }

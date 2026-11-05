@@ -80,7 +80,7 @@ export async function fetchWeather(): Promise<WeatherData> {
     const c = json.current;
     const windMph = mpsToMph(c.wind_speed_10m);
     const condition = weatherCodeToCondition(c.weather_code);
-    const halt = windMph >= WIND_HALT_THRESHOLD_MPH;
+    const halt = windMph > WIND_HALT_THRESHOLD_MPH;
 
     cache = {
       temp: celsiusToFahrenheit(c.temperature_2m),
