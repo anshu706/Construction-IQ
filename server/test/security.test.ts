@@ -213,3 +213,4 @@ describe('Secure Vibe Coding Compliance Suite', () => {
     });
   });
 });
+
