@@ -1,14 +1,75 @@
+# Dependency directories
 node_modules/
-build/
+jspm_packages/
+
+# Production build outputs
 dist/
+build/
+out/
+
+# Testing and coverage
 coverage/
-.DS_Store
+.nyc_output/
+
+# Logs and debug files
 *.log
-.env*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.reticle-setup-crash.log
+
+# Environment variables & secrets (CRITICAL: never commit real secrets)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 !.env.example
-server.js
-brag-output/
-uploads/
+
+# Credentials, Private Keys, Certificates, and Tokens
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.pkcs12
+*.id_rsa
+*.id_rsa.pub
+id_rsa*
+id_ed25519*
+.aws/
+credentials
+credentials.csv
+*.secret
+
+# Terraform state, credentials, and cache
 .terraform/
 *.tfstate
+*.tfstate.*
 *.tfstate.backup
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# User uploads and runtime files
+uploads/
+uploads/*
+brag-output/
+server.js
+temp/
+tmp/
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
