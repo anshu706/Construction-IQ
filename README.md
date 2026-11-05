@@ -1,59 +1,27 @@
 <div align="center">
 
 # 🏗️ ConstructIQ Enterprise
-### **Real-Time Construction Operations Command & Financial Telemetry Console**
+### **Autonomous Construction Project Intelligence, Telemetry & Financial Console**
 
+[![Node.js](https://img.shields.io/badge/Node.js-20_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.0.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.2-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.2.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.1.14-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-Llama_3.2_Vision-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://build.nvidia.com/)
-[![Google Gemini](https://img.shields.io/badge/Google_Gemini-2.0_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.22.0-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Terraform](https://img.shields.io/badge/Terraform-AWS_IaC-844FBA?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![Docker](https://img.shields.io/badge/Docker-Multi--stage-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-F59E0B?style=for-the-badge)](./LICENSE)
 
 <p align="center">
-  <b>Mission-control telemetry for construction project execution.</b><br>
-  A simulated operations console with weather telemetry, safety interlocks, role-based views, financial variance analytics, and optional AI assistance.
+  <b>Mission-control telemetry and scheduling ledger for enterprise construction execution.</b><br>
+  Role-governed RBAC, Earned Value Management (EVM), Critical Path Method (CPM), verifiable safety streak auditing, binary-validated evidence storage, and hot-swappable AI Copilot.
 </p>
 
-[⚡ Quick Start](#-quick-start) • [📹 Video Showcase](#-video-showcase) • [✨ Key Features](#-key-features) • [🏛️ System Architecture](#-system-architecture) • [🤖 AI Copilot](#-dual-engine-ai-copilot) • [📊 EVM Financial Engine](#-evm-financial-engine)
+[🏗️ Cloud Architecture](#-cloud-architecture) • [⚡ Local Development](#-local-development-with-docker-compose) • [🔐 Environment Variables](#-environment-variables) • [🚀 Cloud Deployment](#-deployment-guide) • [📖 Runbook](#-operations-runbook) • [💰 AWS Cost Model](#-estimated-monthly-aws-cost)
 
 ---
 
 </div>
-
-## 📹 Video Showcase
-
-> Experience the speed, live sensor telemetry, and role-driven operational command of **ConstructIQ** in action.
-
-<div align="center">
-
-### 🎬 Launch Video Walkthrough
-
-<video src="assets/constructiq-demo.mp4" controls="controls" muted="muted" poster="assets/poster.jpg" width="100%" style="max-height: 600px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);">
-  <p>Your browser does not support HTML5 video. <a href="assets/constructiq-demo.mp4"><b>Click here to view or download the demo video</b></a>.</p>
-</video>
-
-<br>
-
-[![Watch ConstructIQ Launch Demo](assets/preview.gif)](assets/constructiq-demo.mp4)
-
-<sub>👆 <i>Click the interactive preview above to stream or download full high-definition video with original sound design (<b>[assets/constructiq-demo.mp4](assets/constructiq-demo.mp4)</b>)</i></sub>
-
-</div>
-
-<br>
-
-### ⏱️ Video Timeline & Operational Milestones
-
-| Timestamp | Operational Phase | Telemetry & System Action |
-|:---|:---|:---|
-| **`0:00 - 0:05`** | **The Command Center** | Header telemetry initialization with simulated budget, CPI, weather, and safety status. |
-| **`0:05 - 0:11`** | **Role-Based Shift & Gantt** | Perspective shift to **Site Superintendent**; dynamic Gantt schedule tracking across foundation, excavation, and steel framing (L1–L5) with live dependency bars. |
-| **`0:11 - 0:16`** | **Automated Hazard Interlock** | High wind sensor spike (`24 mph` exceeding `20 mph` safety threshold) triggers instantaneous automated **Tower Crane Halt protocol** and safety dispatcher alert. |
-| **`0:16 - 0:19`** | **Enterprise Resolution** | Architectural outro lockup: *"Civil engineering moves fast. Now your telemetry moves faster."* |
-
----
 
 ## 📸 Interface Gallery
 
@@ -64,265 +32,400 @@
       <br><br>
       <img src="assets/dashboard-overview.png" alt="Command Center Dashboard" width="100%" style="border-radius: 8px; border: 1px solid #D1CEC6;" />
       <br>
-      <sub><i>Real-time budget burn, CPI variance, crew status & weather sensors</i></sub>
+      <sub><i>Unclamped CPI/SPI, BAC, EV, AC, and real-time sensor telematics</i></sub>
     </td>
     <td width="33%" align="center" valign="top">
       <b>Interactive Gantt Engine</b>
       <br><br>
       <img src="assets/gantt-schedule.png" alt="Interactive Gantt Engine" width="100%" style="border-radius: 8px; border: 1px solid #D1CEC6;" />
       <br>
-      <sub><i>Critical path dependency tracking, progress bars & crew allocation</i></sub>
+      <sub><i>CPM forward/backward pass, total float, and cycle-rejected dependencies</i></sub>
     </td>
     <td width="33%" align="center" valign="top">
       <b>Automated Hazard Telemetry</b>
       <br><br>
       <img src="assets/hazard-alert.png" alt="Safety Telemetry & Alert" width="100%" style="border-radius: 8px; border: 1px solid #D1CEC6;" />
       <br>
-      <sub><i>Live sensor interlocks triggering automated crane halts & AI mitigation</i></sub>
+      <sub><i>Wind speed sensors triggering non-auto-clearing crane halt interlocks</i></sub>
     </td>
   </tr>
 </table>
 
 ---
 
-## ✨ Key Features
+## 🏗️ Cloud Architecture
 
-### 1. 🎯 5 Role-Based Command Views
-ConstructIQ provides contextual cockpits tailored to each jobsite stakeholder:
-- **👷 Project Manager (PM):** Master timeline, critical path analysis, milestone progress, subcontractor allocation, and delay remediation.
-- **🏗️ Site Superintendent:** Real-time machinery telematics, contractor shift roster, digital punchlist signoffs, and daily field operation logs.
-- **💰 Financial Controller:** Multi-crore INR ledger tracking, Earned Value Management (EVM), Cost Performance Index (CPI), Schedule Performance Index (SPI), and vendor invoice approvals.
-- **🦺 Safety Officer:** IS / OSHA safety compliance, incident root-cause investigations, and environmental threshold alerts.
-- **👔 Executive / Client Stakeholder:** High-level macro portfolio scorecards, ROI forecast, capital expenditure milestones, and automated one-click PDF briefing generator.
-
-### 2. 🤖 Dual-Engine AI Jobsite Copilot
-ConstructIQ features an enterprise AI Copilot with hot-swappable dual backends:
-- **Primary:** **NVIDIA NIM** running `meta/llama-3.2-11b-vision-instruct` on NVIDIA accelerated cloud infrastructure.
-- **Fallback:** **Google Gemini 2.0 Flash** via the `@google/genai` SDK for low-latency engineering recommendations.
-- **Telemetry Synthesis:** The Copilot ingests simulated state (tasks, budgets, milestones, weather, and crew loads) into every prompt to deliver context-aware operational guidance.
-
-### 3. 📅 Interactive Critical-Path Gantt Scheduler
-- Full multi-phase lifecycle management: *Excavation*, *Foundation*, *Framing*, *HVAC/Electrical*, *Finishing*, and *Exterior*.
-- Dependency chain mapping with automated lag calculation and milestone status pills (`On Track`, `At Risk`, `Delayed`).
-- Inline task editing, progress sliders, and crew assignment.
-
-### 4. ⚡ Live Site Simulator & Telemetry Engine
-- Built-in simulation controller with `Paused`, `1x Normal`, and `2x Fast` clock modes.
-- Simulates dynamic environmental shifts (sudden rain, extreme winds, temperature drops).
-- **Automated Hazard Interlock:** When wind speeds exceed 20 mph, the platform triggers an automatic **Tower Crane Safety Shutdown** and logs the incident in real-time.
-
-### 5. 💵 Indian Rupee (INR / ₹) Financial Terminal
-- Built for infrastructure projects with native Indian-numbering formatting (`₹ Cr`, `₹ Lakh`).
-- Complete vendor billing pipeline: *Materials*, *Labor*, *Equipment*, and *Subcontractor Services*.
-- Dynamic cashflow burn charts powered by **Recharts**.
-
-### 6. 📋 Field Punchlist & Quality Assurance
-- Digital defect logging with location tags (e.g. `Level 3 East Wing`, `Basement Parking B2`).
-- Severity classifications (`Low`, `Medium`, `High`, `Critical`) and photo attachments.
-- Subcontractor assignment and inspection verification workflow.
-
----
-
-## 🏛️ System Architecture
+ConstructIQ runs on AWS as an enterprise-grade, containerized application with strict network isolation, automated scaling, and zero static secrets.
 
 ```mermaid
 flowchart TB
-    subgraph Client ["Client Browser (React 19 + TypeScript + Vite)"]
-        UI["Tailwind CSS v4 & Lucide Icons"]
-        State["Reactive Project State & LocalStorage Hydration"]
-        Roles["5 Role-Based View Switchers"]
-        Gantt["Interactive Gantt & Schedule Engine"]
-        Charts["Recharts EVM & Financial Visuals"]
-        CopilotUI["AICopilotDrawer (Client Streaming)"]
+    subgraph CI_CD ["CI / CD & Image Registry"]
+        GH["GitHub Actions\n(OIDC AWS Auth)"]
+        ECR["Amazon ECR\n(Vulnerability Scanning · 20-Image Retention)"]
+        GH -->|npm test · Hadolint · Trivy| GH
+        GH -->|Push Container Image| ECR
+        GH -->|Run One-Off Task: prisma migrate deploy| ECS_Migrate["ECS Migration Task\n(Prisma Deploy)"]
     end
 
-    subgraph Backend ["Node.js Express Proxy (server.ts)"]
-        API["POST /api/copilot"]
-        Health["GET /api/health"]
-        TelemetryAssembler["Live Site Telemetry & Context Assembler"]
-        StaticServe["SPA Static Assets Distributer"]
+    subgraph Internet ["Public Internet"]
+        Users["Client Browser\n(React 19 SPA)"]
+        Users -->|HTTPS :443| ALB
     end
 
-    subgraph AI_Engines ["AI Acceleration Cloud"]
-        NVIDIA["NVIDIA NIM Cloud\n(Meta Llama 3.2 11B Vision Instruct)"]
-        GEMINI["Google GenAI Cloud\n(Gemini 2.0 Flash)"]
+    subgraph AWS_VPC ["AWS VPC (10.0.0.0/16 or 10.1.0.0/16)"]
+        subgraph Public_Subnets ["Public Subnets (Multi-AZ)"]
+            ALB["Application Load Balancer\n(HTTPS TLS 1.3 · /metrics Blocked)"]
+            NAT["NAT Gateway"]
+        end
+
+        subgraph Private_Subnets ["Private App & Data Subnets (No Public IP)"]
+            subgraph ECS_Cluster ["ECS Fargate Cluster (Autoscaling 2–10 Tasks)"]
+                AppTask1["ConstructIQ Node 20 Runtime\n(Non-Root 'node' User)"]
+                AppTask2["ConstructIQ Node 20 Runtime\n(Non-Root 'node' User)"]
+            end
+
+            RDS[("Amazon RDS PostgreSQL 16\n(Encrypted gp3 · 7-Day Backups)")]
+            Secrets["AWS Secrets Manager\n(DATABASE_URL · SESSION_SECRET · API Keys)"]
+        end
     end
 
-    UI --> State
-    State --> Roles
-    State --> Gantt
-    State --> Charts
-    CopilotUI --> API
-    API --> TelemetryAssembler
-    TelemetryAssembler --> NVIDIA
-    NVIDIA -.->|Automatic Fallback| GEMINI
-    Backend --> StaticServe
+    subgraph Storage_Observability ["Storage & Observability"]
+        S3["Amazon S3 Private Bucket\n(Uploads · 5-Min Presigned URLs)"]
+        CW["Amazon CloudWatch\n(Pino JSON Logs · 5 Metric Alarms · Dashboard)"]
+        NIM["NVIDIA NIM Cloud\n(Llama 3.2 Vision)"]
+        GEMINI["Google Gemini Cloud\n(2.0 Flash Fallback)"]
+    end
+
+    ALB -->|Forward :3001| AppTask1
+    ALB -->|Forward :3001| AppTask2
+    AppTask1 -->|Prisma Pool :5432| RDS
+    AppTask2 -->|Prisma Pool :5432| RDS
+    ECS_Migrate -->|Apply Migrations :5432| RDS
+    AppTask1 -.->|IAM Secrets Access| Secrets
+    AppTask1 -->|Presigned Read / Write| S3
+    AppTask1 -->|Pino Structured JSON| CW
+    AppTask1 -->|AI Context Telemetry| NIM
+    NIM -.->|Failover| GEMINI
 ```
+
+---
+
+## ⚡ Local Development with Docker Compose
+
+Running ConstructIQ locally requires a single command. Docker Compose spins up PostgreSQL 16 with health checks, runs one-off database migrations, and boots the production-grade application container.
+
+### 1. Prerequisites
+- Docker Engine 24+ and Docker Compose v2+
+- Node.js 20 LTS (if running outside Docker)
+
+### 2. Configure Environment
+Create your local environment file from the template:
+```bash
+cp .env.example .env
+```
+Ensure `.env` contains valid development values:
+```ini
+POSTGRES_USER=constructiq
+POSTGRES_PASSWORD=local_secure_dev_password_123
+SESSION_SECRET=local_development_session_secret_32_characters_minimum
+DEMO_MODE=true
+DEMO_PASSWORD=DemoPass123!
+```
+
+### 3. Launch the Stack
+```bash
+# Build containers and run detached
+npm run docker:up
+
+# Or directly with Docker Compose:
+docker compose up --build -d
+```
+
+### 4. Verify Local Health
+```bash
+# Check service health
+curl -s http://localhost:3001/api/health | jq .
+# Expected: {"status":"ok","version":"0.1.0","demoMode":true,...}
+
+# Check database readiness
+curl -s http://localhost:3001/api/ready | jq .
+# Expected: {"status":"ready","database":"connected"}
+```
+Open **[http://localhost:3001](http://localhost:3001)** in your browser. Quick-login demo profiles are pre-populated on the login interface (`pm@constructiq.demo`, `supervisor@constructiq.demo`, etc.).
+
+To shut down the local environment:
+```bash
+npm run docker:down
+```
+
+---
+
+## 🔐 Environment Variables
+
+The application enforces strict startup validation via Zod in `server/config.ts`. Missing required variables will cause the server process or container to fail fast with an actionable diagnostic message.
+
+| Variable | Description | Required? | Secret? | Default Value |
+| :--- | :--- | :---: | :---: | :--- |
+| `DATABASE_URL` | PostgreSQL connection URL with pooling parameters | **Yes** | **Yes** | `postgresql://user:pass@localhost:5432/constructiq` |
+| `SESSION_SECRET` | 32+ character key used to sign and encrypt session cookies | **Yes** | **Yes** | *None* |
+| `NODE_ENV` | Environment target (`development`, `production`, `test`) | No | No | `development` |
+| `PORT` | HTTP server binding port | No | No | `3001` |
+| `DEMO_MODE` | Opt-in switch for demo triggers and scenario seeding | No | No | `false` |
+| `DEMO_PASSWORD` | Password applied to seeded demo user accounts | No | **Yes** | `DemoPass123!` |
+| `S3_BUCKET` | AWS S3 bucket for construction photo evidence storage | Prod Only | No | `""` (uses local `./uploads` in dev) |
+| `AWS_REGION` | AWS Region for S3 and Secrets Manager integration | No | No | `us-east-1` |
+| `UPLOAD_DIR` | Local fallback directory for photo storage in dev | No | No | `./uploads` |
+| `NVIDIA_API_KEY` | NVIDIA NIM Cloud API authentication token | Optional | **Yes** | `""` |
+| `NVIDIA_MODEL` | Target NIM foundation model | No | No | `meta/llama-3.2-11b-vision-instruct` |
+| `GEMINI_API_KEY` | Google Gemini API key used for secondary AI failover | Optional | **Yes** | `""` |
+
+---
+
+## 🚀 Deployment Guide
+
+ConstructIQ uses Terraform infrastructure as code organized into modular layers with independent bootstrap, development, and production environments.
+
+### Phase 1: Bootstrap (State Bucket & Lock Table)
+The S3 state bucket and DynamoDB locking table must exist prior to applying environment infrastructure:
+```bash
+cd terraform/bootstrap
+terraform init
+terraform plan -out=bootstrap.tfplan
+terraform apply bootstrap.tfplan
+```
+*Note the output `tf_state_bucket_name` and `tf_lock_table_name`.*
+
+### Phase 2: Deploy Development Environment (`dev`)
+```bash
+cd ../envs/dev
+terraform init \
+  -backend-config="bucket=constructiq-tf-state-us-east-1" \
+  -backend-config="key=constructiq/dev/terraform.tfstate" \
+  -backend-config="region=us-east-1" \
+  -backend-config="dynamodb_table=constructiq-tf-locks"
+
+terraform plan -out=dev.tfplan
+# Request confirmation before applying billable cloud resources
+terraform apply dev.tfplan
+```
+
+### Phase 3: Deploy Production Environment (`prod`)
+Production provisions a Multi-AZ VPC, PostgreSQL 16 RDS instance with deletion protection and automated snapshots, dual-replica ECS Fargate tasks with autoscaling up to 10 instances, and CloudWatch alarm triggers:
+```bash
+cd ../envs/prod
+terraform init \
+  -backend-config="bucket=constructiq-tf-state-us-east-1" \
+  -backend-config="key=constructiq/prod/terraform.tfstate" \
+  -backend-config="region=us-east-1" \
+  -backend-config="dynamodb_table=constructiq-tf-locks"
+
+terraform plan -out=prod.tfplan
+terraform apply prod.tfplan
+```
+
+### Phase 4: Populate AWS Secrets Manager Out-of-Band
+Never commit secrets to Terraform. Inject values directly via the AWS CLI:
+```bash
+# Database URL
+aws secretsmanager put-secret-value \
+  --secret-id "constructiq/prod/DATABASE_URL" \
+  --secret-string "postgresql://app_user:PROD_PASSWORD@rds-endpoint:5432/constructiq?schema=public&sslmode=require"
+
+# Session Secret (32+ bytes)
+aws secretsmanager put-secret-value \
+  --secret-id "constructiq/prod/SESSION_SECRET" \
+  --secret-string "$(openssl rand -hex 32)"
+
+# AI API Keys
+aws secretsmanager put-secret-value \
+  --secret-id "constructiq/prod/NVIDIA_API_KEY" \
+  --secret-string "nvapi-prod-key-goes-here"
+```
+
+---
+
+## 📖 Operations Runbook
+
+### 1. Rolling Deployment Rollback
+If a deployment fails smoke tests or introduces runtime regressions, trigger immediate rollback to the previous task definition:
+```bash
+# 1. Identify previous stable task definition revision
+aws ecs list-task-definitions --family-prefix constructiq-prod-app --sort DESC --max-items 5
+
+# 2. Update service to previous revision
+aws ecs update-service \
+  --cluster constructiq-prod \
+  --service constructiq-prod-service \
+  --task-definition constructiq-prod-app:<PREVIOUS_REVISION> \
+  --force-new-deployment
+
+# 3. Wait for stability
+aws ecs wait services-stable \
+  --cluster constructiq-prod \
+  --service constructiq-prod-service
+```
+
+### 2. Restoring RDS from a Snapshot
+In case of catastrophic database corruption:
+```bash
+# 1. Identify target automated snapshot
+aws rds describe-db-snapshots \
+  --db-instance-identifier constructiq-prod-postgres \
+  --snapshot-type automated \
+  --query "DBSnapshots[*].[DBSnapshotIdentifier,SnapshotCreateTime]" --output table
+
+# 2. Restore to a new instance identifier
+aws rds restore-db-instance-from-db-snapshot \
+  --db-instance-identifier constructiq-prod-postgres-restored \
+  --db-snapshot-identifier <SNAPSHOT_IDENTIFIER> \
+  --db-subnet-group-name constructiq-prod-rds-subnets \
+  --vpc-security-group-ids <RDS_SG_ID>
+
+# 3. Update DATABASE_URL in Secrets Manager with the new endpoint once available
+```
+
+### 3. Rotating `SESSION_SECRET`
+Rotating `SESSION_SECRET` invalidates all existing active browser sessions, forcing users to re-authenticate:
+1. Generate a new cryptographically random secret:
+   ```bash
+   NEW_SECRET=$(openssl rand -hex 32)
+   ```
+2. Update Secrets Manager:
+   ```bash
+   aws secretsmanager put-secret-value \
+     --secret-id "constructiq/prod/SESSION_SECRET" \
+     --secret-string "$NEW_SECRET"
+   ```
+3. Restart ECS tasks to pick up the revised secret:
+   ```bash
+   aws ecs update-service \
+     --cluster constructiq-prod \
+     --service constructiq-prod-service \
+     --force-new-deployment
+   ```
+
+### 4. Reading Application & System Logs
+ConstructIQ logs in structured JSON format via Pino. To stream real-time logs filtered by severity:
+```bash
+# Stream error-level logs from CloudWatch
+aws logs tail /ecs/constructiq-prod --follow --filter-pattern '{ $.level >= 50 }'
+
+# Query by request ID trace
+aws logs filter-log-events \
+  --log-group-name /ecs/constructiq-prod \
+  --filter-pattern '{ $.req.id = "specific-request-uuid" }'
+```
+
+---
+
+## 💰 Estimated Monthly AWS Cost
+
+*Estimated baseline running costs for the `prod` environment in `us-east-1`:*
+
+| AWS Service | Specifications / Sizing | Monthly Estimate (USD) |
+| :--- | :--- | :---: |
+| **ECS on AWS Fargate** | 2 tasks × 0.5 vCPU, 1 GB RAM (24/7 baseline) | ~$30.00 |
+| **Amazon RDS (PostgreSQL 16)** | `db.t4g.small` Multi-AZ, 20 GB gp3 storage | ~$52.00 |
+| **Application Load Balancer (ALB)** | 1 ALB, ~15 LCU (traffic and connection processing) | ~$22.50 |
+| **Amazon S3 & Data Transfer** | 100 GB standard storage, 50k presigned GET requests | ~$3.50 |
+| **NAT Gateway** | 1 NAT Gateway in primary AZ (~$32.40 base + data processing) | ~$36.00 |
+| **CloudWatch & Secrets Manager** | Log group retention (30 days), 5 metric alarms, 5 secrets | ~$7.50 |
+| **Total Estimated Monthly Spend** | **Standard High-Availability Production Baseline** | **~$151.50** |
+
+*Assumptions: us-east-1 pricing; single NAT Gateway configured for private subnets; modest dev/staging workloads running on `db.t4g.micro` with 1 task reduce dev environment costs to under ~$45.00/month.*
 
 ---
 
 ## 📁 Repository Structure
 
 ```
-Construction-Project/
-├── assets/                          # Showcase media, video and documentation assets
-│   ├── constructiq-demo.mp4         # 1080p full launch demo video (with audio)
-│   ├── preview.gif                  # High-framerate animated preview GIF
-│   ├── poster.jpg                   # Video poster thumbnail
-│   ├── dashboard-overview.png       # Command Center telemetry snapshot
-│   ├── gantt-schedule.png           # Interactive Gantt milestone snapshot
-│   └── hazard-alert.png             # Automated safety interlock snapshot
-├── brag-output/                     # Production launch video artifacts & composition
-├── src/                             # React application source code
-│   ├── components/                  # Modular React UI components
-│   │   ├── AICopilotDrawer.tsx       # AI Copilot drawer with real-time site telemetry
-│   │   ├── ExecutiveReportModal.tsx # C-suite report generator & export
-│   │   ├── ExecutiveView.tsx        # High-level investor & stakeholder overview
-│   │   ├── FinancialView.tsx        # INR ledger, invoice approvals & EVM charts
-│   │   ├── GanttChart.tsx           # Interactive scheduling & dependency visualizer
-│   │   ├── MetricCard.tsx           # Standardized operational telemetry cards
-│   │   ├── ProjectSettingsModal.tsx # Project configuration & parameters
-│   │   ├── PunchlistView.tsx        # Quality defect logging & field resolution
-│   │   ├── RoleViewSelector.tsx     # 5-way stakeholder role cockpit switcher
-│   │   ├── SafetyView.tsx           # OSHA compliance, incident logs & sensor alarms
-│   │   ├── SimulatorControl.tsx     # Real-time event ticker & time controls
-│   │   └── SupervisorView.tsx       # Site superintendent field machinery & crews
-│   ├── App.tsx                      # Master layout, telemetry bar & global state
-│   ├── currency.ts                  # Multi-crore INR financial formatter utilities
-│   ├── data.ts                      # Initial enterprise seed data & simulation events
-│   ├── types.ts                     # TypeScript schemas & interface definitions
-│   └── index.css                    # Tailwind CSS v4 styling & animations
-├── server.ts                        # Express API proxy server for NVIDIA NIM & Gemini
-├── package.json                     # Project scripts and dependencies
-├── vite.config.ts                   # Vite build and plugin configurations
-└── tsconfig.json                    # Strict TypeScript compiler options
+Construction-IQ/
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml                    # Automated lint, Vitest against Postgres, and Trivy scans
+│   │   └── cd.yml                    # OIDC deployment to ECR, ECS Fargate, with rollback
+│   ├── dependabot.yml                # Dependency automation (npm, docker, actions, terraform)
+│   └── pull_request_template.md      # Standardized PR review checklist
+├── docs/
+│   └── adr/                          # Architecture Decision Records
+│       ├── 0001-ecs-fargate-over-eks.md
+│       ├── 0002-prisma-over-raw-sql.md
+│       ├── 0003-oidc-over-access-keys.md
+│       └── 0004-s3-presigned-urls-over-public-uploads.md
+├── prisma/
+│   ├── migrations/                   # Committed versioned SQL migrations
+│   ├── schema.prisma                 # 13 core relational models & PostgreSQL enums
+│   └── seed.ts                       # Database seeder with demo accounts & project data
+├── server/                           # Express 4 + TypeScript Application Server
+│   ├── auth/
+│   │   ├── middleware.ts             # Role-based access control & rate limiting
+│   │   └── session.ts                # Session management & cookie signing
+│   ├── routes/
+│   │   ├── auth.ts                   # Login, logout, session verification
+│   │   ├── copilot.ts                # AI Copilot endpoint with server context hydration
+│   │   ├── incidents.ts              # Safety incident reporting and EHS resolution
+│   │   ├── invoices.ts               # Vendor invoices & financial approvals
+│   │   ├── logs.ts                   # Append-only site operations feed
+│   │   ├── milestones.ts             # Project schedule milestones
+│   │   ├── photos.ts                 # Multipart upload with magic-byte verification
+│   │   ├── projects.ts               # Project metrics, EVM, and crane halt clearing
+│   │   ├── punchItems.ts             # QA/QC defect punchlist items
+│   │   ├── risks.ts                  # Risk mitigation matrix
+│   │   ├── tasks.ts                  # Task schedule & CPM dependency checks
+│   │   └── weather.ts                # Cached Open-Meteo telemetry
+│   ├── services/
+│   │   ├── cpm.ts                    # Critical Path Method calculation engine
+│   │   ├── evm.ts                    # Earned Value Management (EVM) calculation engine
+│   │   ├── safety.ts                 # Verifiable safety streak calculator
+│   │   └── weather.ts                # Open-Meteo client with 15-minute TTL cache
+│   ├── config.ts                     # Zod-validated environment configuration
+│   ├── db.ts                         # Singleton Prisma client
+│   ├── index.ts                      # Express entry point, helmet, Pino, and /metrics
+│   └── logger.ts                     # Pino structured logger instance
+├── shared/                           # Shared schemas & utilities (frontend + backend)
+│   ├── currency.ts                   # INR formatting & currency conversion
+│   ├── evmConfig.ts                  # EVM thresholds & health status evaluation
+│   ├── permissions.ts                # 5-role x 26-action permission matrix
+│   └── schemas.ts                    # Zod validation schemas with .strict() enforcement
+├── src/                              # React 19 Frontend (Vite + Tailwind CSS v4)
+│   ├── api/
+│   │   ├── client.ts                 # Fetch wrapper with automatic credentials handling
+│   │   └── queries.ts                # TanStack Query hooks & mutations
+│   ├── components/                   # Modular UI views & drawers
+│   │   ├── AICopilotDrawer.tsx
+│   │   ├── ExecutiveReportModal.tsx
+│   │   ├── ExecutiveView.tsx
+│   │   ├── FinancialView.tsx
+│   │   ├── GanttChart.tsx
+│   │   ├── LoginPage.tsx
+│   │   ├── MetricCard.tsx
+│   │   ├── ProjectSettingsModal.tsx
+│   │   ├── PunchlistView.tsx
+│   │   ├── RoleViewSelector.tsx
+│   │   ├── SafetyView.tsx
+│   │   ├── SimulatorControl.tsx
+│   │   └── SupervisorView.tsx
+│   ├── App.tsx                       # Authenticated shell layout & tab routing
+│   ├── index.css                     # Tailwind CSS styling
+│   └── main.tsx                      # QueryClientProvider & React DOM root
+├── terraform/                        # Infrastructure as Code (AWS)
+│   ├── bootstrap/                    # Remote S3 state & DynamoDB lock table
+│   ├── envs/
+│   │   ├── dev/                      # Development environment definition
+│   │   └── prod/                     # Production environment definition
+│   ├── modules/                      # Reusable infrastructure modules
+│   │   ├── alb/                      # Application Load Balancer & /metrics blocking rule
+│   │   ├── ecr/                      # Elastic Container Registry & lifecycle policy
+│   │   ├── ecs/                      # Fargate cluster, task definition, and autoscaling
+│   │   ├── network/                  # VPC, public/private subnets, NAT, and security groups
+│   │   ├── observability/            # CloudWatch log group, 5 alarms, and dashboard
+│   │   ├── rds/                      # PostgreSQL 16 instance with automated snapshots
+│   │   ├── s3/                       # Private bucket for uploaded photos
+│   │   └── secrets/                  # Secrets Manager parameter placeholders
+│   └── backend.tf                    # Remote S3 backend specification
+├── docker-compose.yml                # Multi-service local development stack
+├── Dockerfile                        # Multi-stage production container definition
+├── package.json                      # Build scripts, test runners, and dependencies
+├── vite.config.ts                    # Vite build configuration with manualChunks code splitting
+└── vitest.config.ts                  # Vitest runner configuration
 ```
-
----
-
-## ⚡ Quick Start
-
-### Prerequisites
-- **Node.js**: `v18.0.0` or higher (Node.js 20+ recommended)
-- **Package Manager**: `npm`, `pnpm`, or `bun`
-
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd Construction-Project
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-# or: bun install
-```
-
-### 3. Configure Environment Variables
-Copy the template and insert your API keys:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your preferred AI credentials:
-```ini
-# NVIDIA NIM AI API key (server-side only)
-NVIDIA_API_KEY="your-nvidia-api-key"
-NVIDIA_MODEL="meta/llama-3.2-11b-vision-instruct"
-
-# Google Gemini API key (optional server-side fallback)
-GEMINI_API_KEY="your-gemini-api-key"
-
-# Server Ports
-PORT=3001
-VITE_PORT=3000
-```
-
-> **Note:** The application includes intelligent fallback mock data, so you can test the UI and simulation controls even before configuring AI keys!
-
-### 4. Run the Development Server
-
-**Option A: Frontend Only (Vite Dev Server)**
-```bash
-npm run dev
-```
-> Open [http://localhost:3000](http://localhost:3000) to view the client interface.
-
-**Option B: Full-Stack Mode (Frontend + AI Copilot Proxy Server)**
-```bash
-# Terminal 1: Run Vite client
-npm run dev
-
-# Terminal 2: Run Express AI backend
-npm run server:dev
-```
-
-### 5. Production Build
-```bash
-npm run build
-npm start
-```
-
----
-
-## 🤖 Dual-Engine AI Copilot
-
-ConstructIQ includes a dedicated backend endpoint (`POST /api/copilot`) that dynamically assembles a site-wide telemetry manifest on every query:
-
-```json
-{
-  "query": "Assess schedule risk for a concrete pour due to forecasted high winds",
-  "userRole": "SiteSupervisor",
-  "context": {
-    "tasks": [...],
-    "invoices": [...],
-    "incidents": [...],
-    "weather": { "temp": 78, "condition": "High Wind Alert", "wind": 24, "humidity": 45 }
-  }
-}
-```
-
-The system streams or returns actionable civil engineering guidance, safety protocols, and cost-impact calculations directly into the UI drawer.
-
----
-
-## 📊 EVM Financial Engine
-
-ConstructIQ calculates real-time Earned Value Management (EVM) parameters for civil contracts:
-
-$$\text{CPI} = \frac{\text{Earned Value (EV)}}{\text{Actual Cost (AC)}}$$
-
-$$\text{SPI} = \frac{\text{Earned Value (EV)}}{\text{Planned Value (PV)}}$$
-
-- **$\text{CPI} > 1.0$**: Under budget (e.g. `1.08` indicates 8% cost efficiency).
-- **$\text{SPI} \ge 1.0$**: Ahead or on schedule.
-- **₹ Cr Notation**: All figures are formatted to the Indian numbering system standard.
-
----
-
-## 🛠️ Tech Stack
-
-| Domain | Technology | Purpose |
-|:---|:---|:---|
-| **Frontend Core** | [React 19](https://react.dev/) | Modern concurrent UI architecture |
-| **Language** | [TypeScript 5.8](https://www.typescriptlang.org/) | End-to-end type safety & data contracts |
-| **Build Tool** | [Vite 6](https://vitejs.dev/) | Sub-second HMR & optimized production bundling |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | Modern CSS engine with custom architectural design tokens |
-| **Motion** | [Motion](https://motion.dev/) | Smooth physical layout transitions & animations |
-| **Charts** | [Recharts](https://recharts.org/) | Responsive financial burn & EVM telemetry curves |
-| **Icons** | [Lucide React](https://lucide.dev/) | Architectural & industrial icon system |
-| **AI Cloud** | [NVIDIA NIM](https://build.nvidia.com/) | Meta Llama 3.2 11B Vision Instruct compute |
-| **AI Fallback** | [Google Gemini](https://ai.google.dev/) | Gemini 2.0 Flash via `@google/genai` |
-| **Backend** | [Express 4](https://expressjs.com/) | Lightweight API proxy & telemetry synthesis |
-
----
-
-## 📜 License
-
-This project is licensed under the **Apache License 2.0** — see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-  <sub>ConstructIQ Enterprise © 2026. Built with precision for modern civil engineering and infrastructure delivery.</sub>
-</div>

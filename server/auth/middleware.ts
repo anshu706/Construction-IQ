@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import { getSession, SESSION_COOKIE_NAME } from './session.js';
 import { Action, hasPermission, Role } from '../../shared/permissions.js';
 
@@ -25,36 +26,34 @@ declare global {
   }
 }
 
-// Rate limiter for login endpoint
-const loginAttempts = new Map<string, { count: number; firstAttempt: number }>();
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOGIN_WINDOW_MS = 60_000;
-
-export function rateLimitLogin(req: Request, res: Response, next: NextFunction) {
-  const key = `${req.ip}_${req.body?.email || ''}`;
-  const now = Date.now();
-  const record = loginAttempts.get(key);
-
-  if (!record || now - record.firstAttempt > LOGIN_WINDOW_MS) {
-    loginAttempts.set(key, { count: 1, firstAttempt: now });
-    return next();
-  }
-
-  if (record.count >= MAX_LOGIN_ATTEMPTS) {
-    const retryAfter = Math.ceil((LOGIN_WINDOW_MS - (now - record.firstAttempt)) / 1000);
-    res.setHeader('Retry-After', retryAfter.toString());
-    return res.status(429).json({
-      error: `Too many login attempts. Please wait ${retryAfter} seconds before trying again.`,
-    });
-  }
-
-  record.count += 1;
-  return next();
-}
+/**
+ * Login rate limiter: max 5 attempts per 60 seconds.
+ *
+ * ARCHITECTURAL NOTICE:
+ * The default MemoryStore tracks attempts in-memory per Node.js process.
+ * This works for single-replica deployments. In multi-replica ECS environments,
+ * clients hitting different Fargate tasks bypass this in-memory counter.
+ * For production multi-replica environments:
+ * 1. Implement AWS WAF Rate-based Rule at the ALB layer (recommended), OR
+ * 2. Use a shared Redis store (e.g. rate-limit-redis with ElastiCache).
+ */
+export const rateLimitLogin = rateLimit({
+  windowMs: 60_000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => `${req.ip || 'ip'}_${req.body?.email || ''}`,
+  message: {
+    error: 'Too many login attempts. Please wait 60 seconds before trying again.',
+  },
+  validate: { xForwardedForHeader: false, ip: false },
+});
 
 export function resetLoginAttempts(req: Request) {
-  const key = `${req.ip}_${req.body?.email || ''}`;
-  loginAttempts.delete(key);
+  const key = `${req.ip || 'ip'}_${req.body?.email || ''}`;
+  if (typeof (rateLimitLogin as any).resetKey === 'function') {
+    (rateLimitLogin as any).resetKey(key);
+  }
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -118,4 +117,3 @@ export function requirePermission(action: Action) {
     return next();
   };
 }
-

@@ -23,5 +23,18 @@ export default defineConfig(() => {
         },
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            charts: ['recharts'],
+            motion: ['motion'],
+            tanstack: ['@tanstack/react-query'],
+            icons: ['lucide-react'],
+          },
+        },
+      },
+    },
   };
 });

@@ -112,13 +112,12 @@ router.post(
     // Create Photo record
     const photo = await prisma.photo.create({
       data: {
-        filename,
+        originalName: req.file.originalname || filename,
         mimeType: detectedMime,
-        sizeBytes: req.file.buffer.length,
-        storageUrl,
+        byteSize: req.file.buffer.length,
+        storageKey: storageUrl,
         projectId: projectId ?? '',
-        uploadedById: user.id,
-        ...(punchItemId ? { punchItemId } : {}),
+        uploadedBy: user.id,
       },
     });
 
@@ -145,12 +144,12 @@ router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<voi
     return;
   }
 
-  if (config.S3_BUCKET && photo.storageUrl.startsWith('s3://')) {
+  if (config.S3_BUCKET && photo.storageKey.startsWith('s3://')) {
     // Generate presigned URL valid for 5 minutes
     const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3');
     const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
     const s3 = new S3Client({ region: config.AWS_REGION });
-    const key = photo.storageUrl.replace(`s3://${config.S3_BUCKET}/`, '');
+    const key = photo.storageKey.replace(`s3://${config.S3_BUCKET}/`, '');
     const url = await getSignedUrl(
       s3,
       new GetObjectCommand({ Bucket: config.S3_BUCKET, Key: key }),
@@ -159,7 +158,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<voi
     res.json({ url, expiresInSeconds: 300 });
   } else {
     // Local dev: return static path
-    res.json({ url: photo.storageUrl, expiresInSeconds: null });
+    res.json({ url: photo.storageKey, expiresInSeconds: null });
   }
 });
 

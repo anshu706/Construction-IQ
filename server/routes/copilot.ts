@@ -81,7 +81,7 @@ async function buildContext(projectId: string, userRole: string): Promise<string
     }))
   );
 
-  const openIncidents = incidents.filter(i => i.status === 'Open' || i.status === 'Investigating');
+  const openIncidents = incidents.filter(i => i.status === 'Open' || i.status === 'UnderInvestigation');
   const criticalTasks = tasks.filter(t => t.priority === 'Critical');
   const delayedTasks = tasks.filter(t => t.status === 'Delayed');
   const pendingInvoices = invoices.filter(i => i.status === 'Pending');

@@ -103,9 +103,6 @@ app.use(cookieParser(config.SESSION_SECRET));
 // IMPORTANT: This endpoint must NOT be exposed through the public ALB.
 // Add an ALB listener rule that returns 404 for path /metrics from the internet.
 // In Terraform: see modules/alb/main.tf for the blocking rule.
-import('/api/metrics' as any).catch(() => {}); // lazy, see metricsRoutes below
-import { createServer } from 'http';
-
 let metricsHandler: ((req: Request, res: Response) => void) | null = null;
 (async () => {
   try {
