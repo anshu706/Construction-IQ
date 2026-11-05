@@ -66,6 +66,35 @@ export const SupervisorView: React.FC<SupervisorViewProps> = ({
     }
   };
 
+  const uploadAndAddPhoto = async (file: File, contextLabel: string) => {
+    const previewUrl = URL.createObjectURL(file);
+    const dateFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const sizeFormatted = file.size >= 1024 * 1024 
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+      : `${Math.round(file.size / 1024)} KB`;
+
+    const newPhoto = {
+      name: file.name,
+      size: sizeFormatted,
+      preview: previewUrl,
+      date: dateFormatted
+    };
+    setUploadedPhotos(prev => [newPhoto, ...prev]);
+    onLogOperationsFeed(`Site Supervisor uploaded ${contextLabel}: "${file.name}" to task ledger.`, 'general', 'success');
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      await fetch('/api/photos/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+    } catch {
+      // Retain local object URL preview in offline mode
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -73,28 +102,14 @@ export const SupervisorView: React.FC<SupervisorViewProps> = ({
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      const newPhoto = {
-        name: file.name,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        preview: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=150&q=80',
-        date: 'Aug 2, 2026'
-      };
-      setUploadedPhotos(prev => [newPhoto, ...prev]);
-      onLogOperationsFeed(`Site Supervisor uploaded drone photo asset: "${file.name}" to task ledger.`, 'general', 'success');
+      uploadAndAddPhoto(file, 'drone photo asset');
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const newPhoto = {
-        name: file.name,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        preview: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=150&q=80',
-        date: 'Aug 2, 2026'
-      };
-      setUploadedPhotos(prev => [newPhoto, ...prev]);
-      onLogOperationsFeed(`Site Supervisor uploaded photo: "${file.name}"`, 'general', 'success');
+      uploadAndAddPhoto(file, 'photo');
     }
   };
 

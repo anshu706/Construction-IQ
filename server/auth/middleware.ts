@@ -46,7 +46,7 @@ export const rateLimitLogin = rateLimit({
   message: {
     error: 'Too many login attempts. Please wait 60 seconds before trying again.',
   },
-  validate: { xForwardedForHeader: false, ip: false },
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
 });
 
 export function resetLoginAttempts(req: Request) {

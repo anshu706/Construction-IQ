@@ -61,7 +61,7 @@ export const PunchlistView: React.FC<PunchlistViewProps> = ({
       subcontractor: newSubcontractor,
       status: 'Open',
       dateReported: new Date().toISOString().split('T')[0],
-      photoUrl: newPhotoUrl || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=400&q=80'
+      photoUrl: newPhotoUrl || undefined
     });
     setNewItemText('');
     setNewLocation('');
@@ -340,14 +340,43 @@ export const PunchlistView: React.FC<PunchlistViewProps> = ({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A756C] block mb-1">Photo Evidence URL (Optional)</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={newPhotoUrl}
-                  onChange={e => setNewPhotoUrl(e.target.value)}
-                  className="w-full p-2 bg-[#F4F1EA] border border-[#D1CEC6] text-xs focus:outline-none focus:border-[#C5A059]"
-                />
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#7A756C] block mb-1">Photo Evidence (Optional file upload or URL)</label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={async (e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        const objectUrl = URL.createObjectURL(file);
+                        setNewPhotoUrl(objectUrl);
+                        try {
+                          const formData = new FormData();
+                          formData.append('photo', file);
+                          const resp = await fetch('/api/photos/upload', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include',
+                          });
+                          if (resp.ok) {
+                            const data = await resp.json();
+                            if (data.url) setNewPhotoUrl(data.url);
+                          }
+                        } catch {
+                          // keep objectUrl in local mode
+                        }
+                      }
+                    }}
+                    className="text-xs font-mono text-[#7A756C]"
+                  />
+                  <input
+                    type="url"
+                    placeholder="Or enter direct photo URL..."
+                    value={newPhotoUrl}
+                    onChange={e => setNewPhotoUrl(e.target.value)}
+                    className="w-full p-2 bg-[#F4F1EA] border border-[#D1CEC6] text-xs focus:outline-none focus:border-[#C5A059]"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-4">
