@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { requireAuth, requirePermission } from '../auth/middleware.js';
+import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -27,6 +27,11 @@ router.post('/', requireAuth, requirePermission('tasks:create'), async (req, res
   }
 
   const { dependencies = [], ...taskData } = parseResult.data;
+
+  // Step 4 Ownership check (IDOR prevention): verify user belongs to target project
+  if (!hasProjectAccess(req.user!, taskData.projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
 
   try {
     // If dependencies provided, check for cycle
@@ -110,6 +115,11 @@ router.patch('/:id/progress', requireAuth, requirePermission('tasks:update_progr
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    // Step 4 Ownership check (IDOR prevention): verify user belongs to task's project
+    if (!hasProjectAccess(req.user!, task.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+    }
+
     // Punch list rule:
     // "Severity Critical blocks the related task from being set to Complete until the punch item is Closed."
     if (status === 'Complete' || progress === 100) {
@@ -171,6 +181,10 @@ router.post('/dependencies', requireAuth, requirePermission('tasks:update'), asy
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
+    if (!hasProjectAccess(req.user!, task.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+    }
+
     const allTasks = await prisma.task.findMany({
       where: { projectId: task.projectId },
       select: { id: true },
@@ -207,6 +221,10 @@ router.delete('/:id', requireAuth, requirePermission('tasks:delete'), async (req
   try {
     const task = await prisma.task.findUnique({ where: { id } });
     if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    if (!hasProjectAccess(req.user!, task.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+    }
 
     await prisma.task.delete({ where: { id } });
 

@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { config } from './config.js';
 import { prisma } from './db.js';
 import logger from './logger.js';
+import { rateLimitApi, csrfProtection } from './auth/middleware.js';
 
 // Route handlers
 import authRoutes      from './routes/auth.js';
@@ -159,21 +160,7 @@ app.get('/metrics', (req: Request, res: Response) => {
 const distPath = path.resolve(__dirname, '../dist');
 app.use(express.static(distPath));
 
-// ── API Routers ───────────────────────────────────────────────────────────────
-app.use('/api/auth',        authRoutes);
-app.use('/api/projects',    projectRoutes);
-app.use('/api/tasks',       taskRoutes);
-app.use('/api/invoices',    invoiceRoutes);
-app.use('/api/incidents',   incidentRoutes);
-app.use('/api/punch-items', punchItemRoutes);
-app.use('/api/risks',       riskRoutes);
-app.use('/api/milestones',  milestoneRoutes);
-app.use('/api/logs',        logRoutes);
-app.use('/api/copilot',     copilotRoutes);
-app.use('/api/photos',      photoRoutes);
-app.use('/api/weather',     weatherRoutes);
-
-// ── Health endpoints ──────────────────────────────────────────────────────────
+// ── Health endpoints (before rate limiting so ALB probes never get blocked) ──
 app.get('/api/health', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({
@@ -192,6 +179,46 @@ app.get('/api/ready', async (_req: Request, res: Response) => {
   } catch {
     res.status(503).json({ status: 'unavailable', database: 'disconnected' });
   }
+});
+
+// ── Global API Rate Limiter & CSRF Protection (Layers 02 & 05) ─────────────────
+app.use('/api', rateLimitApi);
+app.use('/api', csrfProtection);
+
+// ── API Routers ───────────────────────────────────────────────────────────────
+app.use('/api/auth',        authRoutes);
+app.use('/api/projects',    projectRoutes);
+app.use('/api/tasks',       taskRoutes);
+app.use('/api/invoices',    invoiceRoutes);
+app.use('/api/incidents',   incidentRoutes);
+app.use('/api/punch-items', punchItemRoutes);
+app.use('/api/risks',       riskRoutes);
+app.use('/api/milestones',  milestoneRoutes);
+app.use('/api/logs',        logRoutes);
+app.use('/api/copilot',     copilotRoutes);
+app.use('/api/photos',      photoRoutes);
+app.use('/api/weather',     weatherRoutes);
+
+// ── Centralized Error Handler (Layer 04: Don't leak stack traces in prod) ─────
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  const reqId = (req as any).requestId || 'unknown';
+  logger.error({ err, reqId, url: req.url, method: req.method }, 'Unhandled application error');
+
+  const statusCode =
+    typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 600
+      ? err.statusCode
+      : typeof err.status === 'number' && err.status >= 400 && err.status < 600
+      ? err.status
+      : 500;
+
+  res.status(statusCode).json({
+    error: statusCode < 500
+      ? err.message || 'Bad Request'
+      : config.NODE_ENV === 'production'
+      ? 'An unexpected error occurred. Please contact system support.'
+      : err.message || 'Internal Server Error',
+    requestId: reqId,
+  });
 });
 
 // ── SPA fallback ──────────────────────────────────────────────────────────────

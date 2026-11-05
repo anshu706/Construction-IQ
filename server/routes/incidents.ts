@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { requireAuth, requirePermission } from '../auth/middleware.js';
+import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createIncidentSchema, resolveIncidentSchema } from '../../shared/schemas.js';
 
 const router = Router();
@@ -15,6 +15,10 @@ router.get('/', requireAuth, requirePermission('incidents:read'), async (req, re
   const { projectId } = req.query;
   if (!projectId || typeof projectId !== 'string') {
     return res.status(400).json({ error: 'Valid projectId query parameter required' });
+  }
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
   try {
@@ -44,6 +48,10 @@ router.post('/', requireAuth, requirePermission('incidents:create'), async (req,
 
   const { projectId, occurredAt, severity, type, description, actionTaken, isLostTime } = parseResult.data;
   const isActuallyLostTime = isLostTime || type === 'LostTime';
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
 
   try {
     const newIncident = await prisma.incident.create({
@@ -104,6 +112,10 @@ router.patch('/:id/resolve', requireAuth, async (req, res) => {
     const existing = await prisma.incident.findUnique({ where: { id } });
     if (!existing || existing.isDeleted) {
       return res.status(404).json({ error: 'Incident not found' });
+    }
+
+    if (!hasProjectAccess(user, existing.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
     }
 
     const updated = await prisma.incident.update({

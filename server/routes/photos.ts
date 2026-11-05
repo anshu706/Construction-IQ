@@ -11,7 +11,7 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
-import { requireAuth } from '../auth/middleware.js';
+import { requireAuth, hasProjectAccess } from '../auth/middleware.js';
 import { prisma } from '../db.js';
 import { config } from '../config.js';
 
@@ -81,6 +81,11 @@ router.post(
     const projectId = req.body.projectId as string | undefined;
     const punchItemId = req.body.punchItemId as string | undefined;
 
+    if (projectId && !hasProjectAccess(user, projectId)) {
+      res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      return;
+    }
+
     const ext = detectedMime.split('/')[1].replace('jpeg', 'jpg');
     const filename = `${crypto.randomUUID()}.${ext}`;
 
@@ -143,6 +148,12 @@ router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<voi
   const photo = await prisma.photo.findUnique({ where: { id: req.params.id } });
   if (!photo) {
     res.status(404).json({ error: 'Photo not found' });
+    return;
+  }
+
+  const user = (req as any).user;
+  if (photo.projectId && !hasProjectAccess(user, photo.projectId)) {
+    res.status(403).json({ error: 'Forbidden: Access to this photo\'s project is denied' });
     return;
   }
 

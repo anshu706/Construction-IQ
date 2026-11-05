@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { requireAuth, requirePermission } from '../auth/middleware.js';
+import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { calculateEVM } from '../services/evm.js';
 import { calculateCPM } from '../services/cpm.js';
 import { calculateSafetyStreak, countOpenIncidents } from '../services/safety.js';
@@ -14,7 +14,15 @@ const router = Router();
 
 router.get('/', requireAuth, async (req, res) => {
   try {
+    const user = req.user!;
+    // Executives see all projects; other roles are scoped to assigned projects
+    const whereClause =
+      user.role === 'Executive' || !user.memberships || user.memberships.length === 0
+        ? {}
+        : { id: { in: user.memberships.map(m => m.projectId) } };
+
     const projects = await prisma.project.findMany({
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -37,6 +45,10 @@ router.get('/', requireAuth, async (req, res) => {
 
 router.get('/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
+
+  if (!hasProjectAccess(req.user!, id)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
 
   try {
     const project = await prisma.project.findUnique({
@@ -180,6 +192,10 @@ router.post('/:id/clear-crane-halt', requireAuth, async (req, res) => {
     return res.status(403).json({
       error: 'Forbidden: Only SafetyOfficer or ProjectManager can clear the Tower Crane Halt.',
     });
+  }
+
+  if (!hasProjectAccess(user, id)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
   try {

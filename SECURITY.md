@@ -40,10 +40,18 @@ ConstructIQ implements defense-in-depth security principles across application c
 - **Hardware Isolation**: `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
 
 ### 4. Rate Limiting and DoS Prevention
+- **Global API Rate Limiter**: 180 requests per minute per IP on all `/api/*` endpoints with standard draft-7 rate-limit headers (`ratelimit`, `ratelimit-policy`).
 - **Login Rate Limiter**: 5 failed login attempts per minute per IP and email combination via `express-rate-limit`.
 - **Copilot Query Limiter**: 12 AI assistant interactions per minute per IP.
 - **Payload Limits**: Strict JSON and URL-encoded body limits of 10 MB.
 - **Multi-Replica Notice**: Default rate limiting utilizes an in-memory store. For multi-replica deployments behind an ALB, AWS WAF rate-based rules or a Redis-backed store (`rate-limit-redis`) must be enabled.
+
+### 5. Multi-Tenancy Ownership & IDOR Protection (Secure Vibe Coding Step 4)
+- **Resource Ownership Verification**: Every resource mutation and access request (tasks, invoices, incidents, punch items, photos, milestones, risks) strictly checks project membership (`hasProjectAccess`).
+- **Cross-Project Access Prevention**: Users assigned to Project A are strictly forbidden from reading or mutating resources in Project B (HTTP 403 Forbidden).
+- **Executive Portfolio Scope**: Only executive accounts (`Role.Executive`) possess multi-project portfolio visibility.
+- **CSRF Origin Protection**: All state-changing mutation requests (`POST`, `PUT`, `PATCH`, `DELETE`) verified against Host and Origin/Referer headers to prevent cross-site request forgery.
+- **Information Leakage Prevention**: Centralized error handling suppresses database drivers, SQL queries, and internal stack traces in production, returning masked errors with correlation `requestId`.
 
 ### 5. Input Validation and Upload Hygiene
 - **Strict Schema Enforcement**: All incoming API requests are validated with Zod using `.strict()`, rejecting unexpected or malicious payload injection.

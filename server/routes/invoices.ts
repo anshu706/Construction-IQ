@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { requireAuth, requirePermission } from '../auth/middleware.js';
+import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createInvoiceSchema, updateInvoiceStatusSchema } from '../../shared/schemas.js';
 import { formatINR } from '../../shared/currency.js';
 
@@ -16,6 +16,10 @@ router.get('/', requireAuth, requirePermission('invoices:read'), async (req, res
   const { projectId } = req.query;
   if (!projectId || typeof projectId !== 'string') {
     return res.status(400).json({ error: 'Valid projectId query parameter required' });
+  }
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
   try {
@@ -44,6 +48,10 @@ router.post('/', requireAuth, requirePermission('invoices:create'), async (req, 
   }
 
   const { projectId, vendor, category, amountInr, invoiceDate, description } = parseResult.data;
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
 
   try {
     // Generate server-side unique invoice number for the project
@@ -107,6 +115,10 @@ router.patch('/:id/status', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
+    if (!hasProjectAccess(user, existing.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+    }
+
     const updatedInvoice = await prisma.invoice.update({
       where: { id },
       data: {
@@ -141,6 +153,10 @@ router.delete('/:id', requireAuth, requirePermission('invoices:approve'), async 
   try {
     const invoice = await prisma.invoice.findUnique({ where: { id } });
     if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+
+    if (!hasProjectAccess(req.user!, invoice.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+    }
 
     // Financial records are never hard-deleted
     await prisma.invoice.update({

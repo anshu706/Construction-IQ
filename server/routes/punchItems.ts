@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { requireAuth, requirePermission } from '../auth/middleware.js';
+import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createPunchItemSchema, updatePunchStatusSchema } from '../../shared/schemas.js';
 
 const router = Router();
@@ -14,6 +14,10 @@ router.get('/', requireAuth, requirePermission('punch_items:read'), async (req, 
   const { projectId } = req.query;
   if (!projectId || typeof projectId !== 'string') {
     return res.status(400).json({ error: 'Valid projectId query parameter required' });
+  }
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
   try {
@@ -39,6 +43,10 @@ router.post('/', requireAuth, requirePermission('punch_items:create'), async (re
   }
 
   const { projectId, item, location, phase, severity, subcontractor, photoId, resolutionNotes } = parseResult.data;
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
 
   try {
     const newPunch = await prisma.punchItem.create({
@@ -89,6 +97,10 @@ router.patch('/:id/status', requireAuth, requirePermission('punch_items:update')
   try {
     const punch = await prisma.punchItem.findUnique({ where: { id } });
     if (!punch) return res.status(404).json({ error: 'Punch item not found' });
+
+    if (!hasProjectAccess(req.user!, punch.projectId)) {
+      return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+    }
 
     const updated = await prisma.punchItem.update({
       where: { id },

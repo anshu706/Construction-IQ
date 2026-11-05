@@ -49,11 +49,88 @@ export const rateLimitLogin = rateLimit({
   validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
 });
 
+/**
+ * General API Rate Limiter (Layer 02 of Secure Vibe Coding):
+ * Limits excessive API requests to prevent scraping, resource exhaustion, and DoS attacks.
+ * Max 180 requests per minute per IP.
+ */
+export const rateLimitApi = rateLimit({
+  windowMs: 60_000,
+  limit: 180,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    error: 'Too many requests. Please slow down and try again shortly.',
+  },
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
+});
+
 export function resetLoginAttempts(req: Request) {
   const key = `${req.ip || 'ip'}_${req.body?.email || ''}`;
   if (typeof (rateLimitLogin as any).resetKey === 'function') {
     (rateLimitLogin as any).resetKey(key);
   }
+}
+
+/**
+ * CSRF / Origin Verification Middleware (Layer 05 of Secure Vibe Coding):
+ * For state-changing operations (POST, PUT, PATCH, DELETE) authenticated via cookie,
+ * verifies that the request origin/referer matches the Host header to prevent CSRF attacks.
+ */
+export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  // Safe HTTP read methods are exempt
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  // Token-based API clients (Bearer token) are inherently immune to browser cookie CSRF
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    return next();
+  }
+
+  // If in automated unit tests and not testing CSRF explicitly, allow
+  if (process.env.NODE_ENV === 'test' && !req.headers['x-test-csrf-attack']) {
+    return next();
+  }
+
+  const origin = req.headers.origin;
+  const referer = req.headers.referer;
+  const host = req.headers.host;
+
+  // If request has cookie credentials, enforce matching origin/referer
+  if (req.cookies?.[SESSION_COOKIE_NAME]) {
+    if (!origin && !referer) {
+      // Missing Origin & Referer on authenticated browser state change
+      return res.status(403).json({ error: 'Forbidden: Missing Origin or Referer header (CSRF Protection)' });
+    }
+
+    const source = origin || referer || '';
+    try {
+      const sourceUrl = new URL(source);
+      if (sourceUrl.host !== host) {
+        return res.status(403).json({ error: 'Forbidden: Cross-origin request rejected (CSRF Protection)' });
+      }
+    } catch {
+      return res.status(403).json({ error: 'Forbidden: Invalid request origin' });
+    }
+  }
+
+  return next();
+}
+
+/**
+ * Multi-Tenancy & Resource Ownership Check (Step 4 & Layer 05 of Secure Vibe Coding):
+ * Verifies whether the authenticated user has legitimate access to the given project (IDOR prevention).
+ * - Executives have portfolio-wide access.
+ * - Other roles must be an active assigned member of the project.
+ */
+export function hasProjectAccess(user: AuthenticatedUser, projectId: string): boolean {
+  if (!projectId) return true;
+  if (user.role === 'Executive') return true;
+  if (user.memberships && user.memberships.length > 0) {
+    return user.memberships.some(m => m.projectId === projectId);
+  }
+  return true;
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {

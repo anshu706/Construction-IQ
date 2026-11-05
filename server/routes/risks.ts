@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { requireAuth, requirePermission } from '../auth/middleware.js';
+import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createRiskSchema } from '../../shared/schemas.js';
 
 const router = Router();
@@ -14,6 +14,10 @@ router.get('/', requireAuth, async (req, res) => {
   const { projectId } = req.query;
   if (!projectId || typeof projectId !== 'string') {
     return res.status(400).json({ error: 'Valid projectId required' });
+  }
+
+  if (!hasProjectAccess(req.user!, projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
   try {
@@ -31,6 +35,10 @@ router.post('/', requireAuth, requirePermission('risks:manage'), async (req, res
   const parseResult = createRiskSchema.safeParse(req.body);
   if (!parseResult.success) {
     return res.status(400).json({ error: 'Invalid risk payload', details: parseResult.error.flatten() });
+  }
+
+  if (!hasProjectAccess(req.user!, parseResult.data.projectId)) {
+    return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
   try {
