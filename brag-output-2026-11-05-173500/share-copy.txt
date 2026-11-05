@@ -1,9 +1,0 @@
-Civil infrastructure meets autonomous project intelligence.
-
-ConstructIQ combines live IoT crane telematics, multi-role governance, critical-path Gantt schedules, and INR financial variance analytics into a single reactive command center.
-
-Say goodbye to schedule drift. Build with certainty. 🏗️⚡
-
-👉 Explore the demo: demo.constructiq.io
-#CivilEngineering #ConstructionTech #BuildTech #AutonomousOperations #PropTech
-
