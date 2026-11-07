@@ -6,7 +6,56 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ProjectState, Task, Invoice, SafetyIncident, OperationLog } from '../types';
 import { formatINR } from '../currency';
-import { Sparkles, Bot, Send, X, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Calendar, Zap, MessageSquare, Wifi, WifiOff, Cpu } from 'lucide-react';
+import { Sparkles, Bot, Send, X, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Calendar, Zap, MessageSquare, Wifi, WifiOff, Cpu, Eye, EyeOff } from 'lucide-react';
+
+// Simple markdown-to-JSX renderer for copilot messages
+function renderMarkdown(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let key = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.startsWith('### ')) {
+      elements.push(<h3 key={key++} className="text-xs font-bold text-[#1A1A1A] mt-3 mb-1 uppercase tracking-wider border-b border-[#E5E0D8] pb-1">{renderInline(line.slice(4))}</h3>);
+    } else if (line.startsWith('## ')) {
+      elements.push(<h2 key={key++} className="text-sm font-bold text-[#1A1A1A] mt-3 mb-1">{renderInline(line.slice(3))}</h2>);
+    } else if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
+      elements.push(<p key={key++} className="font-bold text-[#1A1A1A] text-xs">{renderInline(line)}</p>);
+    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+      elements.push(<li key={key++} className="text-[11px] leading-relaxed ml-3 flex gap-1.5"><span className="text-[#C5A059] mt-0.5 shrink-0">•</span><span>{renderInline(line.slice(2))}</span></li>);
+    } else if (/^\d+\.\s/.test(line)) {
+      const num = line.match(/^(\d+)\./)?.[1];
+      elements.push(<li key={key++} className="text-[11px] leading-relaxed ml-3 flex gap-1.5"><span className="text-[#C5A059] font-bold shrink-0 font-mono">{num}.</span><span>{renderInline(line.replace(/^\d+\.\s/, ''))}</span></li>);
+    } else if (line.trim() === '') {
+      elements.push(<div key={key++} className="h-1.5" />);
+    } else {
+      elements.push(<p key={key++} className="text-[11px] leading-relaxed">{renderInline(line)}</p>);
+    }
+  }
+
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
+function renderInline(text: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*.*?\*\*|`.*?`)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let k = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) parts.push(<span key={k++}>{text.slice(last, match.index)}</span>);
+    if (match[0].startsWith('**')) {
+      parts.push(<strong key={k++} className="font-bold text-[#1A1A1A]">{match[0].slice(2, -2)}</strong>);
+    } else {
+      parts.push(<code key={k++} className="bg-[#F4F1EA] px-1 py-0.5 rounded text-[10px] font-mono text-[#C5A059]">{match[0].slice(1, -1)}</code>);
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(<span key={k++}>{text.slice(last)}</span>);
+  return parts.length > 0 ? <>{parts}</> : text;
+}
 
 interface AICopilotDrawerProps {
   isOpen: boolean;
@@ -221,7 +270,7 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
     const resp = await fetch('/api/copilot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, context: state, userRole })
+      body: JSON.stringify({ projectId: 'proj-demo-001', query })
     });
     if (!resp.ok) throw new Error(`Server error ${resp.status}`);
     const data = await resp.json();
@@ -365,7 +414,10 @@ export const AICopilotDrawer: React.FC<AICopilotDrawerProps> = ({
                   : 'bg-white border border-[#D1CEC6] text-[#1A1A1A] shadow-sm'
               }`}
             >
-              <div className="prose prose-xs max-w-none whitespace-pre-wrap">{msg.text}</div>
+              {msg.sender === 'assistant'
+                ? renderMarkdown(msg.text)
+                : <div className="whitespace-pre-wrap text-[11px]">{msg.text}</div>
+              }
             </div>
           </div>
         ))}

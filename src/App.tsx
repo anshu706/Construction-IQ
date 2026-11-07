@@ -25,6 +25,7 @@ import { ProjectSettingsModal } from './components/ProjectSettingsModal';
 import { LoginPage } from './components/LoginPage';
 import { EmployeeDashboard } from './components/EmployeeDashboard';
 import { AdminWorkforceView } from './components/AdminWorkforceView';
+import { useToast } from './components/Toast';
 import {
   useCurrentUser, useProjectDetail, useLogoutMutation,
   useUpdateTaskProgressMutation, useCreateTaskMutation, useDeleteTaskMutation,
@@ -36,7 +37,7 @@ import {
 import {
   CloudRain, Sun, Wind, Activity, Check, Calendar, ArrowRight,
   Sparkles, FileText, Database, Settings, ShieldAlert, CheckCircle2, LogOut, WifiOff,
-  Shield, HardHat, Users
+  Shield, HardHat, Users, Loader2
 } from 'lucide-react';
 
 // Demo project ID (matches seed data)
@@ -48,6 +49,7 @@ export default function App() {
   const logoutMutation = useLogoutMutation();
   const user = authData?.user ?? null;
   const isAuthenticated = Boolean(user);
+  const { toast } = useToast();
 
   // ── API-backed project data ───────────────────────────────────────────────
   const { data: projectData, isError: apiError } = useProjectDetail(
@@ -70,10 +72,10 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (user?.role === 'SiteSupervisor') {
-      setDashboardMode('employee');
-    } else if (user?.role) {
+    if (user?.role === 'ProjectManager') {
       setDashboardMode('admin');
+    } else if (user?.role) {
+      setDashboardMode('employee');
     }
   }, [user?.role]);
 
@@ -225,10 +227,11 @@ export default function App() {
     const taskObj: Task = { ...newTask, id: nextId };
     setTasks(prev => [...prev, taskObj]);
     handleLogOperationsFeed(`Added operation: "${newTask.name}" assigned to ${newTask.assignedCrew}.`, 'task_update', 'success');
+    toast(`Task "${newTask.name}" added`, 'success');
     if (isAuthenticated) {
       createTaskMutation.mutate(newTask);
     }
-  }, [tasks.length, handleLogOperationsFeed, isAuthenticated, createTaskMutation]);
+  }, [tasks.length, handleLogOperationsFeed, isAuthenticated, createTaskMutation, toast]);
 
   const handleUpdateTaskProgress = useCallback((id: string, progress: number, status: Task['status'], notes?: string) => {
     setTasks(prev => prev.map(t => {
@@ -363,8 +366,13 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#F4F1EA] flex items-center justify-center">
-        <div className="text-[#7A756C] font-mono text-xs uppercase tracking-widest animate-pulse">
-          Verifying session…
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 bg-[#1A1A1A] flex items-center justify-center shadow-md animate-pulse">
+            <HardHat className="w-6 h-6 text-[#C5A059]" />
+          </div>
+          <div className="text-[#7A756C] font-mono text-xs uppercase tracking-widest animate-pulse">
+            Verifying session…
+          </div>
         </div>
       </div>
     );
@@ -390,7 +398,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 border border-[#1A1A1A] bg-[#1A1A1A] text-[#C5A059] flex items-center justify-center font-sans text-sm font-bold shadow-sm">
-              CQ
+              <HardHat className="w-5 h-5 text-[#C5A059]" />
             </div>
             <div>
               <h1 className="text-[#1A1A1A] text-sm font-bold tracking-tight font-sans uppercase flex items-center gap-2">

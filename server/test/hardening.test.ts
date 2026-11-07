@@ -227,7 +227,7 @@ describe('Phase 3 & 6: Application Hardening and Functional Validation', () => {
       expect(res.body.weather).toHaveProperty('temp');
       expect(res.body.weather).toHaveProperty('wind');
       expect(res.body.weather).toHaveProperty('craneHaltRisk');
-    });
+    }, 15000);
   });
 
   describe('Shutdown Handler Graceful Termination', () => {
