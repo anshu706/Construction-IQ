@@ -32,44 +32,43 @@ export const RoleViewSelector: React.FC<RoleViewSelectorProps> = ({ currentRole,
   const activeProfile = USER_PROFILES.find(p => p.role === currentRole) || USER_PROFILES[0];
 
   return (
-    <div className="bg-white border border-[#D1CEC6] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full shadow-sm" id="role-view-selector">
-      <div className="flex items-center gap-4">
+    <div className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full shadow-xs" id="role-view-selector">
+      <div className="flex items-center gap-3.5">
         <div className="relative">
           <img
             src={activeProfile.avatar}
             alt={activeProfile.name}
-            className="w-14 h-14 rounded-full border border-[#D1CEC6] p-0.5 object-cover"
+            className="w-12 h-12 rounded-full ring-2 ring-slate-100 object-cover"
             id="active-user-avatar"
           />
-          <div className="absolute -bottom-1 -right-1 bg-white border border-[#D1CEC6] rounded-full p-1 shadow-sm">
+          <div className="absolute -bottom-1 -right-1 bg-white border border-slate-200 rounded-full p-1 shadow-xs">
             {getRoleIcon(activeProfile.role)}
           </div>
         </div>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-[#1A1A1A] font-sans font-bold text-lg" id="active-user-name">{activeProfile.name}</h4>
-            <span className="text-[9px] bg-[#E5E2D9] text-[#1A1A1A] border border-[#D1CEC6] rounded-sm px-2 py-0.5 uppercase font-sans tracking-widest font-bold">
+            <h4 className="text-slate-900 font-sans font-bold text-base" id="active-user-name">{activeProfile.name}</h4>
+            <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200/60 rounded-full px-2.5 py-0.5 font-sans font-semibold">
               {activeProfile.role.replace(/([A-Z])/g, ' $1').trim()}
             </span>
           </div>
-          <p className="text-[#7A756C] font-sans text-xs mt-0.5">{activeProfile.title} • <span className="text-[#C5A059] font-bold">{activeProfile.department}</span></p>
-          <p className="text-[#8B8B8B] text-[11px] italic mt-1 font-sans hidden sm:block">Focus: {activeProfile.focus}</p>
+          <p className="text-slate-500 font-sans text-xs mt-0.5">{activeProfile.title} • <span className="text-slate-700 font-medium">{activeProfile.department}</span></p>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <span className="text-[10px] text-[#7A756C] font-bold uppercase tracking-[0.2em] font-sans">Simulate Stakeholder View:</span>
-        <div className="flex flex-wrap gap-1 bg-[#F4F1EA] p-1 border border-[#D1CEC6]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5">
+        <span className="text-xs text-slate-500 font-semibold font-sans">Perspective:</span>
+        <div className="flex flex-wrap gap-1 bg-slate-100/80 p-1 rounded-lg border border-slate-200/60">
           {USER_PROFILES.map(profile => {
             const isActive = profile.role === currentRole;
             return (
               <button
                 key={profile.role}
                 onClick={() => onRoleChange(profile.role)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-sans uppercase tracking-wider font-bold transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-sans font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-[#1A1A1A] text-white shadow-sm'
-                    : 'text-[#7A756C] hover:text-[#1A1A1A] hover:bg-white/50'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                 }`}
                 id={`btn-role-${profile.role.toLowerCase()}`}
               >

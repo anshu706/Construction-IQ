@@ -96,18 +96,18 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       case 'Ahead':
       case 'Optimal':
       case 'Normal Rate':
-        return 'bg-[#2E7D32]/10 text-[#2E7D32] border border-[#2E7D32]/20';
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200/80';
       case 'At risk':
       case 'At Risk':
       case 'On Budget':
       case 'Caution':
-        return 'bg-[#C5A059]/10 text-[#C5A059] border border-[#C5A059]/20';
+        return 'bg-amber-50 text-amber-700 border border-amber-200/80';
       case 'Delayed':
       case 'Over budget':
       case 'Over Budget':
-        return 'bg-[#B71C1C]/10 text-[#B71C1C] border border-[#B71C1C]/20';
+        return 'bg-rose-50 text-rose-700 border border-rose-200/80';
       default:
-        return 'bg-[#7A756C]/10 text-[#7A756C] border border-[#7A756C]/20';
+        return 'bg-slate-50 text-slate-600 border border-slate-200/80';
     }
   };
 
@@ -116,18 +116,18 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       id: 'overview',
       title: 'Overall Progress',
       value: `${averageProgress}%`,
-      subtitle: `${completedTasks} of ${totalTasks} Tasks Done`,
-      icon: <Percent className="w-4 h-4 text-[#C5A059]" />,
+      subtitle: `${completedTasks} of ${totalTasks} Tasks Completed`,
+      icon: <Percent className="w-4 h-4 text-amber-600" />,
       badge: 'Normal Rate',
       footer: (
         <div className="w-full mt-3">
-          <div className="flex justify-between items-center text-[9px] text-[#7A756C] mb-1 font-sans uppercase tracking-wider">
-            <span>Operational Progress</span>
-            <span>Target: 70%</span>
+          <div className="flex justify-between items-center text-[10px] text-slate-500 mb-1.5 font-sans font-medium">
+            <span>Operational Target</span>
+            <span className="font-semibold text-slate-700">70%</span>
           </div>
-          <div className="w-full bg-[#F4F1EA] rounded-full h-1.5 overflow-hidden border border-[#D1CEC6]">
+          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-[#C5A059] h-full rounded-full transition-all duration-500"
+              className="bg-amber-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${averageProgress}%` }}
             />
           </div>
@@ -136,39 +136,39 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     },
     {
       id: 'schedule',
-      title: 'Schedule Status',
+      title: 'Schedule Health',
       value: scheduleStatus,
-      subtitle: `SPI: ${spiVal} (${evm.spi === null ? 'n/a' : evm.spi >= 1 ? 'Ahead' : 'Lagging'})`,
-      icon: <Calendar className="w-4 h-4 text-[#A89F91]" />,
+      subtitle: `SPI: ${spiVal} (${evm.spi === null ? 'n/a' : evm.spi >= 1 ? 'Ahead of baseline' : 'Lagging'})`,
+      icon: <Calendar className="w-4 h-4 text-blue-600" />,
       badge: scheduleStatus,
       footer: (
-        <div className="flex items-center gap-1.5 mt-4 text-[10px] font-sans uppercase tracking-wider text-[#7A756C]">
+        <div className="flex items-center gap-1.5 mt-4 text-[11px] font-sans font-medium text-slate-500">
           {evm.spi !== null && evm.spi >= 1 ? (
-            <ArrowUpRight className="w-3.5 h-3.5 text-[#2E7D32] shrink-0" />
+            <ArrowUpRight className="w-4 h-4 text-emerald-600 shrink-0" />
           ) : (
-            <ArrowDownRight className="w-3.5 h-3.5 text-[#B71C1C] shrink-0" />
+            <ArrowDownRight className="w-4 h-4 text-rose-600 shrink-0" />
           )}
-          <span>Critical path evaluated.</span>
+          <span>Critical path evaluated</span>
         </div>
       ),
     },
     {
       id: 'budget',
-      title: 'Budget Status',
+      title: 'Budget Variance',
       value: `${formatINRCompact(spent)} Spent`,
       subtitle: `CPI: ${cpiVal} • Budget: ${formatINRCompact(totalBudget)}`,
-      icon: <IndianRupee className="w-4 h-4 text-[#1A1A1A]" />,
+      icon: <IndianRupee className="w-4 h-4 text-slate-700" />,
       badge: budgetStatus,
       footer: (
         <div className="w-full mt-3">
-          <div className="flex justify-between items-center text-[9px] text-[#7A756C] mb-1 font-sans uppercase tracking-wider">
-            <span>Spent {spentPercentage}%</span>
-            <span>Rem: {formatINRCompact(totalBudget - spent)}</span>
+          <div className="flex justify-between items-center text-[10px] text-slate-500 mb-1.5 font-sans font-medium">
+            <span>Burn {spentPercentage}%</span>
+            <span className="font-semibold text-slate-700">Rem: {formatINRCompact(totalBudget - spent)}</span>
           </div>
-          <div className="w-full bg-[#F4F1EA] rounded-full h-1.5 overflow-hidden border border-[#D1CEC6]">
+          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                spentPercentage > 100 ? 'bg-[#B71C1C]' : spentPercentage > 85 ? 'bg-[#C5A059]' : 'bg-[#2E7D32]'
+                spentPercentage > 100 ? 'bg-rose-500' : spentPercentage > 85 ? 'bg-amber-500' : 'bg-emerald-500'
               }`}
               style={{ width: `${Math.min(spentPercentage, 100)}%` }}
             />
@@ -178,15 +178,15 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     },
     {
       id: 'safety',
-      title: 'Safety Status',
+      title: 'Safety Streak',
       value: `${daysWithoutIncident} Days`,
-      subtitle: `Without Incident • ${activeIncidents} Active`,
-      icon: <ShieldAlert className="w-4 h-4 text-[#B71C1C]" />,
+      subtitle: `Zero Lost-Time • ${activeIncidents} Active`,
+      icon: <ShieldAlert className="w-4 h-4 text-rose-600" />,
       badge: activeIncidents === 0 ? 'Optimal' : 'Caution',
       footer: (
-        <div className="flex items-center gap-1.5 mt-4 text-[10px] font-sans uppercase tracking-wider text-[#7A756C]">
-          <TrendingUp className="w-3.5 h-3.5 text-[#2E7D32] shrink-0" />
-          <span>No OSHA non-compliance.</span>
+        <div className="flex items-center gap-1.5 mt-4 text-[11px] font-sans font-medium text-slate-500">
+          <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>Full safety audit compliance</span>
         </div>
       ),
     },
@@ -200,28 +200,28 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <button
             key={card.id}
             onClick={() => setActiveTab(card.id)}
-            className={`border p-6 text-left flex flex-col justify-between transition-all duration-200 cursor-pointer ${
+            className={`p-5 rounded-xl text-left flex flex-col justify-between transition-all duration-200 cursor-pointer ${
               isSelected 
-                ? 'bg-white border-[#C5A059] shadow-md ring-1 ring-[#C5A059]' 
-                : 'bg-white border-[#D1CEC6] hover:bg-[#F4F1EA]/40 hover:shadow-sm'
+                ? 'bg-white border-2 border-amber-500 shadow-md ring-4 ring-amber-500/10' 
+                : 'bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300'
             }`}
             id={`metric-card-${card.id}`}
           >
-            <div className="flex items-center justify-between w-full mb-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#F4F1EA] border border-[#D1CEC6] rounded-sm">
+            <div className="flex items-center justify-between w-full mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
                   {card.icon}
                 </div>
-                <span className="text-[#1A1A1A] text-[10px] uppercase tracking-widest font-bold font-sans">{card.title}</span>
+                <span className="text-slate-600 text-xs font-semibold font-sans">{card.title}</span>
               </div>
-              <span className={`text-[9px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-sans font-bold ${getBadgeStyle(card.badge)}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-semibold ${getBadgeStyle(card.badge)}`}>
                 {card.badge}
               </span>
             </div>
 
-            <div className="mt-1 mb-2">
-              <h2 className="text-[#1A1A1A] text-3xl font-sans font-extrabold tracking-tight italic">{card.value}</h2>
-              <p className="text-[#7A756C] text-[10px] uppercase tracking-widest font-sans mt-1.5">{card.subtitle}</p>
+            <div className="my-1">
+              <h2 className="text-slate-900 text-2xl font-bold tracking-tight">{card.value}</h2>
+              <p className="text-slate-500 text-xs font-sans mt-0.5">{card.subtitle}</p>
             </div>
 
             {card.footer}
