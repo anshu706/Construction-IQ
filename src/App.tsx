@@ -23,6 +23,8 @@ import { AICopilotDrawer } from './components/AICopilotDrawer';
 import { ExecutiveReportModal } from './components/ExecutiveReportModal';
 import { ProjectSettingsModal } from './components/ProjectSettingsModal';
 import { LoginPage } from './components/LoginPage';
+import { EmployeeDashboard } from './components/EmployeeDashboard';
+import { AdminWorkforceView } from './components/AdminWorkforceView';
 import {
   useCurrentUser, useProjectDetail, useLogoutMutation,
   useUpdateTaskProgressMutation, useCreateTaskMutation, useDeleteTaskMutation,
@@ -33,7 +35,8 @@ import {
 } from './api/queries';
 import {
   CloudRain, Sun, Wind, Activity, Check, Calendar, ArrowRight,
-  Sparkles, FileText, Database, Settings, ShieldAlert, CheckCircle2, LogOut, WifiOff
+  Sparkles, FileText, Database, Settings, ShieldAlert, CheckCircle2, LogOut, WifiOff,
+  Shield, HardHat, Users
 } from 'lucide-react';
 
 // Demo project ID (matches seed data)
@@ -58,6 +61,26 @@ export default function App() {
   useEffect(() => {
     if (user?.role) setCurrentRole(user.role as UserRole);
   }, [user?.role]);
+
+  // ── 2-in-1 Dual Dashboard Switcher ('admin' | 'employee') ────────────────
+  const [dashboardMode, setDashboardMode] = useState<'admin' | 'employee'>(() => {
+    const saved = localStorage.getItem('constructiq_dashboard_mode');
+    if (saved === 'admin' || saved === 'employee') return saved;
+    return 'admin';
+  });
+
+  useEffect(() => {
+    if (user?.role === 'SiteSupervisor') {
+      setDashboardMode('employee');
+    } else if (user?.role) {
+      setDashboardMode('admin');
+    }
+  }, [user?.role]);
+
+  const handleSetDashboardMode = (mode: 'admin' | 'employee') => {
+    setDashboardMode(mode);
+    localStorage.setItem('constructiq_dashboard_mode', mode);
+  };
 
   // ── Active tab ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<string>('overview');
@@ -379,7 +402,37 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-4 font-sans text-[10px] tracking-wider uppercase text-[#7A756C]">
+            {/* 2-in-1 Dual Dashboard Switcher */}
+            <div className="flex items-center bg-[#F4F1EA] p-1 border border-[#D1CEC6] shadow-xs">
+              <button
+                onClick={() => handleSetDashboardMode('admin')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  dashboardMode === 'admin'
+                    ? 'bg-[#1A1A1A] text-white shadow-xs'
+                    : 'text-[#7A756C] hover:text-[#1A1A1A]'
+                }`}
+                id="btn-switch-admin"
+                title="Switch to Admin & Management Console"
+              >
+                <Shield className="w-3.5 h-3.5 text-[#C5A059]" />
+                <span>1. Admin</span>
+              </button>
+              <button
+                onClick={() => handleSetDashboardMode('employee')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  dashboardMode === 'employee'
+                    ? 'bg-[#1A1A1A] text-white shadow-xs'
+                    : 'text-[#7A756C] hover:text-[#1A1A1A]'
+                }`}
+                id="btn-switch-employee"
+                title="Switch to Employee & Field Crew Portal"
+              >
+                <HardHat className="w-3.5 h-3.5 text-[#C5A059]" />
+                <span>2. Employees</span>
+              </button>
+            </div>
+
+            <div className="hidden lg:flex items-center gap-4 font-sans text-[10px] tracking-wider uppercase text-[#7A756C]">
               <div className="flex items-center gap-1.5 bg-[#E5E2D9]/40 px-2.5 py-1 rounded-sm border border-[#D1CEC6]">
                 <Sun className="w-3.5 h-3.5 text-[#C5A059] shrink-0" />
                 <span className="text-[#1A1A1A] font-semibold">{weather.temp}°F</span>
@@ -434,49 +487,67 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 py-6 flex flex-col gap-6 w-full" id="main-content-layout">
-        <RoleViewSelector currentRole={currentRole} onRoleChange={setCurrentRole} />
+        {dashboardMode === 'employee' ? (
+          <EmployeeDashboard
+            tasks={tasks}
+            punchItems={punchItems}
+            incidents={incidents}
+            weather={weather}
+            craneHaltActive={apiProject?.isCraneHalted}
+            onUpdateTaskProgress={handleUpdateTaskProgress}
+            onAddIncident={handleAddIncident}
+            onAddPunchItem={handleAddPunchItem}
+            onUpdatePunchStatus={handleUpdatePunchStatus}
+            onLogOperationsFeed={handleLogOperationsFeed}
+            currentUser={user}
+            onSwitchToAdmin={() => handleSetDashboardMode('admin')}
+          />
+        ) : (
+          <>
+            <RoleViewSelector currentRole={currentRole} onRoleChange={setCurrentRole} />
 
-        <MetricCard
-          tasks={tasks}
-          invoices={invoices}
-          incidents={incidents}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          evmMetrics={apiProject?.evmMetrics}
-          safetyDaysStreak={apiProject?.safetyStreak}
-          projectBudget={apiProject?.budgetInr}
-        />
+            <MetricCard
+              tasks={tasks}
+              invoices={invoices}
+              incidents={incidents}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              evmMetrics={apiProject?.evmMetrics}
+              safetyDaysStreak={apiProject?.safetyStreak}
+              projectBudget={apiProject?.budgetInr}
+            />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full" id="bento-grid-dashboard">
-          <section className="lg:col-span-3 flex flex-col gap-6" id="workspace-views-routers">
-            {/* Navigation Tabs */}
-            <div className="flex border-b border-[#D1CEC6] overflow-x-auto whitespace-nowrap scrollbar-none gap-2" id="nav-tabs">
-              {[
-                { id: 'overview',    label: 'Site Overview' },
-                { id: 'schedule',   label: 'Gantt Scheduler' },
-                { id: 'budget',     label: 'Budget & Financials (INR)' },
-                { id: 'safety',     label: 'Safety & Compliance' },
-                { id: 'punchlist',  label: 'QA / Punch List' },
-                { id: 'supervisor', label: 'Supervisor Operations' },
-                { id: 'executive',  label: 'Executive Portfolio' },
-              ].map(tab => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-4 text-[10px] uppercase tracking-wider font-semibold cursor-pointer transition-all border-b-2 font-sans ${
-                      isActive ? 'border-[#C5A059] text-[#1A1A1A] font-bold' : 'border-transparent text-[#7A756C] hover:text-[#1A1A1A]'
-                    }`}
-                    id={`tab-btn-${tab.id}`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full" id="bento-grid-dashboard">
+              <section className="lg:col-span-3 flex flex-col gap-6" id="workspace-views-routers">
+                {/* Navigation Tabs */}
+                <div className="flex border-b border-[#D1CEC6] overflow-x-auto whitespace-nowrap scrollbar-none gap-2" id="nav-tabs">
+                  {[
+                    { id: 'overview',    label: 'Site Overview' },
+                    { id: 'schedule',   label: 'Gantt Scheduler' },
+                    { id: 'budget',     label: 'Budget & Financials (INR)' },
+                    { id: 'workforce',  label: 'Workforce & Trades' },
+                    { id: 'safety',     label: 'Safety & Compliance' },
+                    { id: 'punchlist',  label: 'QA / Punch List' },
+                    { id: 'supervisor', label: 'Field Operations' },
+                    { id: 'executive',  label: 'Executive Portfolio' },
+                  ].map(tab => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`py-2 px-4 text-[10px] uppercase tracking-wider font-semibold cursor-pointer transition-all border-b-2 font-sans ${
+                          isActive ? 'border-[#C5A059] text-[#1A1A1A] font-bold' : 'border-transparent text-[#7A756C] hover:text-[#1A1A1A]'
+                        }`}
+                        id={`tab-btn-${tab.id}`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
 
-            <div className="animate-fade-in" id="workspace-view-content">
+                <div className="animate-fade-in" id="workspace-view-content">
               {activeTab === 'overview' && (
                 <div className="flex flex-col gap-6" id="overview-tab-content">
                   <div className="bg-white border border-[#D1CEC6] p-8 flex flex-col justify-between relative shadow-sm" id="overview-banner">
@@ -584,6 +655,10 @@ export default function App() {
                 <FinancialView invoices={invoices} onAddInvoice={handleAddInvoice} onUpdateInvoiceStatus={handleUpdateInvoiceStatus} userRole={currentRole} />
               )}
 
+              {activeTab === 'workforce' && (
+                <AdminWorkforceView tasks={tasks} onLogOperationsFeed={handleLogOperationsFeed} />
+              )}
+
               {activeTab === 'safety' && (
                 <SafetyView incidents={incidents} onAddIncident={handleAddIncident} onResolveIncident={handleResolveIncident} userRole={currentRole} />
               )}
@@ -606,7 +681,9 @@ export default function App() {
             <SimulatorControl logs={logs} simulationSpeed={simulationSpeed} onSpeedChange={setSimulationSpeed} onTriggerEvent={handleTriggerEvent} />
           </aside>
         </div>
-      </main>
+      </>
+    )}
+  </main>
 
       {/* Floating AI Copilot */}
       <button

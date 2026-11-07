@@ -7,12 +7,15 @@ import React, { useState } from 'react';
 import { useLoginMutation } from '../api/queries';
 import { HardHat, Shield, ArrowRight, AlertCircle, Lock, Mail } from 'lucide-react';
 
-const DEMO_ACCOUNTS = [
-  { role: 'ProjectManager', email: 'pm@constructiq.demo', label: 'Rahul Sharma (PM)' },
-  { role: 'SiteSupervisor', email: 'supervisor@constructiq.demo', label: 'Priya Patel (Site Superintendent)' },
-  { role: 'FinanceManager', email: 'finance@constructiq.demo', label: 'Project Coordinator (Finance)' },
-  { role: 'SafetyOfficer', email: 'safety@constructiq.demo', label: 'Vikram Singh (EHS Director)' },
-  { role: 'Executive', email: 'exec@constructiq.demo', label: 'Neha Gupta (VP Operations)' },
+const ADMIN_ACCOUNTS = [
+  { role: 'ProjectManager', email: 'pm@constructiq.demo', label: 'Rahul Sharma (Senior PM)', badge: 'Admin / PM' },
+  { role: 'Executive', email: 'exec@constructiq.demo', label: 'Neha Gupta (VP Operations)', badge: 'Admin / Executive' },
+  { role: 'FinanceManager', email: 'finance@constructiq.demo', label: 'Project Coordinator (Finance)', badge: 'Admin / Finance' },
+  { role: 'SafetyOfficer', email: 'safety@constructiq.demo', label: 'Vikram Singh (EHS Director)', badge: 'Admin / Safety' },
+];
+
+const EMPLOYEE_ACCOUNTS = [
+  { role: 'SiteSupervisor', email: 'supervisor@constructiq.demo', label: 'Priya Patel (Site Superintendent)', badge: 'Employee Portal' },
 ];
 
 export const LoginPage: React.FC = () => {
@@ -105,21 +108,41 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <div className="mt-8 pt-6 border-t border-[#E5E0D8]">
-            <p className="text-[11px] font-mono uppercase tracking-wider text-[#7A756C] mb-3 flex items-center space-x-1">
+            <p className="text-[11px] font-mono uppercase tracking-wider text-[#7A756C] mb-3 flex items-center space-x-1 font-bold">
               <Shield className="w-3.5 h-3.5 text-[#C5A059]" />
-              <span>Demo Quick-Login Profiles:</span>
+              <span>1. Admin & Management Dashboard:</span>
             </p>
-            <div className="space-y-1.5">
-              {DEMO_ACCOUNTS.map((acc) => (
+            <div className="space-y-1.5 mb-4">
+              {ADMIN_ACCOUNTS.map((acc) => (
                 <button
                   key={acc.role}
                   type="button"
                   onClick={() => handleQuickSelect(acc.email)}
-                  className="w-full text-left px-3 py-2 text-xs bg-[#FAFAF8] hover:bg-[#F0ECE1] border border-[#E5E0D8] text-[#1A1A1A] font-medium transition-colors flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 text-xs bg-[#FAFAF8] hover:bg-[#F0ECE1] border border-[#E5E0D8] text-[#1A1A1A] font-medium transition-colors flex items-center justify-between cursor-pointer"
                 >
-                  <span className="font-mono text-[11px]">{acc.label}</span>
-                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-[#E5E0D8] text-[#1A1A1A]">
-                    {acc.role}
+                  <span className="font-mono text-[11px] font-semibold">{acc.label}</span>
+                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-[#1A1A1A] text-[#C5A059] font-bold">
+                    {acc.badge}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <p className="text-[11px] font-mono uppercase tracking-wider text-[#7A756C] mb-2 flex items-center space-x-1 font-bold">
+              <HardHat className="w-3.5 h-3.5 text-[#C5A059]" />
+              <span>2. Employee & Field Crew Portal:</span>
+            </p>
+            <div className="space-y-1.5">
+              {EMPLOYEE_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.role}
+                  type="button"
+                  onClick={() => handleQuickSelect(acc.email)}
+                  className="w-full text-left px-3 py-2 text-xs bg-amber-50/60 hover:bg-amber-100/70 border border-[#C5A059]/40 text-[#1A1A1A] font-medium transition-colors flex items-center justify-between cursor-pointer"
+                >
+                  <span className="font-mono text-[11px] font-semibold">{acc.label}</span>
+                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-[#C5A059] text-black font-bold">
+                    {acc.badge}
                   </span>
                 </button>
               ))}

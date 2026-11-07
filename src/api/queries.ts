@@ -15,6 +15,51 @@ export interface UserSession {
   memberships: Array<{ projectId: string; projectName: string; role: string }>;
 }
 
+export const DEMO_SESSIONS: Record<string, UserSession> = {
+  'pm@constructiq.demo': {
+    id: 'user-pm-001',
+    email: 'pm@constructiq.demo',
+    name: 'Rahul Sharma',
+    title: 'Senior Project Manager',
+    role: 'ProjectManager',
+    memberships: [{ projectId: 'proj-demo-001', projectName: 'Skyline Metro Tower - Phase 2', role: 'ProjectManager' }],
+  },
+  'supervisor@constructiq.demo': {
+    id: 'user-sup-002',
+    email: 'supervisor@constructiq.demo',
+    name: 'Priya Patel',
+    title: 'Site Superintendent',
+    role: 'SiteSupervisor',
+    memberships: [{ projectId: 'proj-demo-001', projectName: 'Skyline Metro Tower - Phase 2', role: 'SiteSupervisor' }],
+  },
+  'finance@constructiq.demo': {
+    id: 'user-fin-003',
+    email: 'finance@constructiq.demo',
+    name: 'Project Coordinator',
+    title: 'Financial Controller',
+    role: 'FinanceManager',
+    memberships: [{ projectId: 'proj-demo-001', projectName: 'Skyline Metro Tower - Phase 2', role: 'FinanceManager' }],
+  },
+  'safety@constructiq.demo': {
+    id: 'user-safe-004',
+    email: 'safety@constructiq.demo',
+    name: 'Vikram Singh',
+    title: 'EHS Director',
+    role: 'SafetyOfficer',
+    memberships: [{ projectId: 'proj-demo-001', projectName: 'Skyline Metro Tower - Phase 2', role: 'SafetyOfficer' }],
+  },
+  'exec@constructiq.demo': {
+    id: 'user-exec-005',
+    email: 'exec@constructiq.demo',
+    name: 'Neha Gupta',
+    title: 'VP Operations',
+    role: 'Executive',
+    memberships: [{ projectId: 'proj-demo-001', projectName: 'Skyline Metro Tower - Phase 2', role: 'Executive' }],
+  },
+};
+
+const DEMO_STORAGE_KEY = 'constructiq_demo_session';
+
 export function useCurrentUser() {
   return useQuery<{ user: UserSession | null }>({
     queryKey: ['currentUser'],
@@ -24,9 +69,19 @@ export function useCurrentUser() {
         return res;
       } catch (err: any) {
         if (err.status === 401) {
+          localStorage.removeItem(DEMO_STORAGE_KEY);
           return { user: null };
         }
-        throw err;
+        const stored = localStorage.getItem(DEMO_STORAGE_KEY);
+        if (stored) {
+          try {
+            const user = JSON.parse(stored) as UserSession;
+            return { user };
+          } catch {
+            localStorage.removeItem(DEMO_STORAGE_KEY);
+          }
+        }
+        return { user: null };
       }
     },
     retry: false,
@@ -53,11 +108,29 @@ export function useProjectDetail(projectId: string | null) {
 export function useLoginMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (credentials: { email: string; password: string }) =>
-      apiRequest<{ user: UserSession }>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      }),
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const emailKey = credentials.email.trim().toLowerCase();
+      const demoUser = DEMO_SESSIONS[emailKey];
+
+      try {
+        const data = await apiRequest<{ user: UserSession }>('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(credentials),
+        });
+        localStorage.removeItem(DEMO_STORAGE_KEY);
+        return data;
+      } catch (err: any) {
+        const isOfflineOrUnavailable = !err.status || [404, 500, 502, 503, 504].includes(err.status);
+        if (demoUser && isOfflineOrUnavailable) {
+          if (!credentials.password || (credentials.password !== 'DemoPass123!' && err.status === 401)) {
+            throw err;
+          }
+          localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(demoUser));
+          return { user: demoUser };
+        }
+        throw err;
+      }
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(['currentUser'], { user: data.user });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -68,7 +141,14 @@ export function useLoginMutation() {
 export function useLogoutMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => apiRequest('/api/auth/logout', { method: 'POST' }),
+    mutationFn: async () => {
+      localStorage.removeItem(DEMO_STORAGE_KEY);
+      try {
+        return await apiRequest('/api/auth/logout', { method: 'POST' });
+      } catch {
+        return { message: 'Logged out' };
+      }
+    },
     onSuccess: () => {
       queryClient.setQueryData(['currentUser'], { user: null });
       queryClient.clear();

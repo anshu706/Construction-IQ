@@ -20,6 +20,42 @@ export default defineConfig(() => {
         '/api': {
           target: 'http://localhost:3001',
           changeOrigin: true,
+          configure: (proxy) => {
+            proxy.on('error', (_err, _req, res) => {
+              if (res && !('headersSent' in res && res.headersSent)) {
+                res.writeHead(503, { 'Content-Type': 'application/json' });
+                res.end(
+                  JSON.stringify({
+                    error: 'Backend API server unavailable (http://localhost:3001). Switching to demo/offline mode.',
+                    code: 'BACKEND_OFFLINE',
+                  })
+                );
+              }
+            });
+          },
+        },
+      },
+    },
+    preview: {
+      port: 3000,
+      host: 'localhost',
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          configure: (proxy) => {
+            proxy.on('error', (_err, _req, res) => {
+              if (res && !('headersSent' in res && res.headersSent)) {
+                res.writeHead(503, { 'Content-Type': 'application/json' });
+                res.end(
+                  JSON.stringify({
+                    error: 'Backend API server unavailable (http://localhost:3001). Switching to demo/offline mode.',
+                    code: 'BACKEND_OFFLINE',
+                  })
+                );
+              }
+            });
+          },
         },
       },
     },
