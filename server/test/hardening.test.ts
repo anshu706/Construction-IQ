@@ -8,6 +8,7 @@ import request from 'supertest';
 import app from '../index.js';
 import * as sessionModule from '../auth/session.js';
 import { prisma } from '../db.js';
+import * as configModule from '../config.js';
 
 describe('Phase 3 & 6: Application Hardening and Functional Validation', () => {
   describe('Security Headers & Request ID Propagation', () => {
@@ -172,10 +173,17 @@ describe('Phase 3 & 6: Application Hardening and Functional Validation', () => {
         joinedAt: new Date(),
       } as any);
 
+      // Simulate environment with no AI keys configured
+      const originalConfig = { ...configModule.config };
+      Object.assign(configModule.config, { NVIDIA_API_KEY: '', GEMINI_API_KEY: '' });
+
       const res = await request(app)
         .post('/api/copilot')
         .set('Cookie', ['constructiq_session=mock-session-pm'])
         .send({ projectId: 'proj-1', query: 'Summarize tasks' });
+
+      // Restore config after test
+      Object.assign(configModule.config, originalConfig);
 
       // If keys are empty in test env, must return 503
       expect(res.status).toBe(503);

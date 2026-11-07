@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Dark background square -->
+  <rect width="32" height="32" fill="#1A1A1A"/>
+
+  <!-- Hard hat shape in gold #C5A059 -->
+  <!-- Dome of the hat -->
+  <path d="M16 7C11.5 7 8 10.5 8 15H24C24 10.5 20.5 7 16 7Z" fill="#C5A059"/>
+  <!-- Brim of the hat -->
+  <rect x="6" y="15" width="20" height="3" rx="1" fill="#C5A059"/>
+  <!-- Inner band line -->
+  <rect x="10" y="18" width="12" height="1.5" rx="0.5" fill="#1A1A1A" opacity="0.4"/>
+</svg>
+
