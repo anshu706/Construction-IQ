@@ -88,6 +88,11 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Login endpoint creates/replaces session and is authenticated via credentials, not cookie
+  if (req.path === '/login' || req.originalUrl === '/api/auth/login') {
+    return next();
+  }
+
   // If in automated unit tests and not testing CSRF explicitly, allow
   if (process.env.NODE_ENV === 'test' && !req.headers['x-test-csrf-attack']) {
     return next();
@@ -96,6 +101,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   const origin = req.headers.origin;
   const referer = req.headers.referer;
   const host = req.headers.host;
+  const forwardedHost = req.headers['x-forwarded-host'] as string | undefined;
 
   // If request has cookie credentials, enforce matching origin/referer
   if (req.cookies?.[SESSION_COOKIE_NAME]) {
@@ -107,7 +113,13 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     const source = origin || referer || '';
     try {
       const sourceUrl = new URL(source);
-      if (sourceUrl.host !== host) {
+      const allowedHosts = [host, forwardedHost].filter(Boolean);
+      // In development, also accept localhost:3000 (Vite dev server) talking to localhost:3001
+      if (process.env.NODE_ENV === 'development') {
+        allowedHosts.push('localhost:3000', '127.0.0.1:3000');
+      }
+
+      if (!allowedHosts.includes(sourceUrl.host)) {
         return res.status(403).json({ error: 'Forbidden: Cross-origin request rejected (CSRF Protection)' });
       }
     } catch {
