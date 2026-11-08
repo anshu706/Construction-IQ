@@ -199,19 +199,19 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({
   const [fieldPhotos, setFieldPhotos] = useState<Array<{ name: string; url: string; time: string; task: string }>>([
     {
       name: 'Joint_Weld_Inspection_L3.jpg',
-      url: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=400&q=80',
+      url: '/photos/Joint_Weld_Inspection_L3.jpg',
       time: '09:15 AM',
       task: 'Structural Steel Framing'
     },
     {
       name: 'Rebar_Tie_Verification_L4.jpg',
-      url: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=400&q=80',
+      url: '/photos/Rebar_Tie_Verification_L4.jpg',
       time: '10:45 AM',
       task: 'Deck Pouring Level 4'
     },
     {
       name: 'Conduit_RoughIn_ZoneB.jpg',
-      url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
+      url: '/photos/Conduit_RoughIn_ZoneB.jpg',
       time: '11:30 AM',
       task: 'Electrical Conduit Routing'
     }

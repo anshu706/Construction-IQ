@@ -11,7 +11,7 @@ export const USER_PROFILES: UserProfile[] = [
     name: 'Rahul Sharma',
     role: 'ProjectManager',
     title: 'Senior Project Manager',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
+    avatar: '/photos/avatar-pm.jpg',
     department: 'Operations',
     focus: 'Overall execution, schedule coordination, risk mitigation'
   },
@@ -19,7 +19,7 @@ export const USER_PROFILES: UserProfile[] = [
     name: 'Priya Patel',
     role: 'SiteSupervisor',
     title: 'Site Superintendent',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+    avatar: '/photos/avatar-sup.jpg',
     department: 'Field Operations',
     focus: 'Daily task dispatch, worker safety, crew productivity'
   },
@@ -27,7 +27,7 @@ export const USER_PROFILES: UserProfile[] = [
     name: 'Project Coordinator',
     role: 'FinanceManager',
     title: 'Financial Controller',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+    avatar: '/photos/avatar-fin.jpg',
     department: 'Finance & Accounting',
     focus: 'Budget tracking, change orders, invoice approvals'
   },
@@ -35,7 +35,7 @@ export const USER_PROFILES: UserProfile[] = [
     name: 'Neha Gupta',
     role: 'Executive',
     title: 'VP of Operations',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80',
+    avatar: '/photos/avatar-exec.jpg',
     department: 'Executive Board',
     focus: 'Portfolio health, high-level KPIs, long-term strategic growth'
   },
@@ -43,7 +43,7 @@ export const USER_PROFILES: UserProfile[] = [
     name: 'Vikram Singh',
     role: 'SafetyOfficer',
     title: 'EHS Director',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    avatar: '/photos/avatar-safe.jpg',
     department: 'Safety & Compliance',
     focus: 'OSHA compliance, PPE inspections, safety audits'
   }
@@ -477,7 +477,7 @@ export const INITIAL_PUNCH_ITEMS: import('./types').PunchItem[] = [
     subcontractor: 'Concrete Crew B',
     status: 'Closed',
     dateReported: '2026-07-28',
-    photoUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=400&q=80',
+    photoUrl: '/photos/Joint_Weld_Inspection_L3.jpg',
     resolutionNotes: 'Additional 25mm spacer chairs installed and re-inspected by structural engineer.'
   },
   {
@@ -489,7 +489,7 @@ export const INITIAL_PUNCH_ITEMS: import('./types').PunchItem[] = [
     subcontractor: 'Thermal Systems Inc.',
     status: 'In Progress',
     dateReported: '2026-08-01',
-    photoUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=400&q=80',
+    photoUrl: '/photos/punch-02.jpg',
     resolutionNotes: 'Sleeve being repositioned and sealed with 2-hour rated fire caulk.'
   },
   {
@@ -501,7 +501,7 @@ export const INITIAL_PUNCH_ITEMS: import('./types').PunchItem[] = [
     subcontractor: 'Concrete Crew B',
     status: 'Ready for Inspection',
     dateReported: '2026-07-30',
-    photoUrl: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=400&q=80',
+    photoUrl: '/photos/Rebar_Tie_Verification_L4.jpg',
     resolutionNotes: 'Non-shrink structural grout patch applied and cured for 48 hours.'
   },
   {
@@ -513,7 +513,7 @@ export const INITIAL_PUNCH_ITEMS: import('./types').PunchItem[] = [
     subcontractor: 'Ironworkers Local 4',
     status: 'Closed',
     dateReported: '2026-07-31',
-    photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80',
+    photoUrl: '/photos/Conduit_RoughIn_ZoneB.jpg',
     resolutionNotes: 'Standard 4-inch OSHA timber toe-board fastened firmly.'
   },
   {
@@ -525,7 +525,7 @@ export const INITIAL_PUNCH_ITEMS: import('./types').PunchItem[] = [
     subcontractor: 'Plumbing Subcontractor',
     status: 'Open',
     dateReported: '2026-08-02',
-    photoUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=400&q=80',
+    photoUrl: '/photos/Conduit_RoughIn_ZoneB.jpg',
     resolutionNotes: 'Waiting for plumber to recheck 1:50 slope ratio.'
   }
 ];

@@ -25,8 +25,8 @@ export const SupervisorView: React.FC<SupervisorViewProps> = ({
   const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<string[]>([]);
   const [toolboxTopic, setToolboxTopic] = useState('');
   const [uploadedPhotos, setUploadedPhotos] = useState<{ name: string; size: string; preview: string; date: string }[]>([
-    { name: 'Deck_Pour_L4.jpg', size: '2.4 MB', preview: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=150&q=80', date: 'Aug 2, 2026' },
-    { name: 'Steel_Frame_Joints_Level_3.jpg', size: '1.8 MB', preview: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=150&q=80', date: 'Aug 1, 2026' }
+    { name: 'Deck_Pour_L4.jpg', size: '2.4 MB', preview: '/photos/Rebar_Tie_Verification_L4.jpg', date: 'Aug 2, 2026' },
+    { name: 'Steel_Frame_Joints_Level_3.jpg', size: '1.8 MB', preview: '/photos/Joint_Weld_Inspection_L3.jpg', date: 'Aug 1, 2026' }
   ]);
 
   const [dragActive, setDragActive] = useState(false);

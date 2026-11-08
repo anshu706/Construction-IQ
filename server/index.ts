@@ -74,7 +74,7 @@ app.use(
         // See SECURITY.md for the rationale.
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'blob:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://images.unsplash.com'],
         connectSrc: [
           "'self'",
           'https://integrate.api.nvidia.com',
