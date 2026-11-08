@@ -4,9 +4,10 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createIncidentSchema, resolveIncidentSchema } from '../../shared/schemas.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
@@ -21,6 +22,11 @@ router.get('/', requireAuth, requirePermission('incidents:read'), async (req, re
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    return res.json({ incidents: demoStore.getIncidents(projectId) });
+  }
+
   try {
     const incidents = await prisma.incident.findMany({
       where: {
@@ -32,7 +38,8 @@ router.get('/', requireAuth, requirePermission('incidents:read'), async (req, re
 
     return res.json({ incidents });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to retrieve incidents' });
+    markDatabaseUnavailable();
+    return res.json({ incidents: demoStore.getIncidents(projectId) });
   }
 });
 
@@ -51,6 +58,29 @@ router.post('/', requireAuth, requirePermission('incidents:create'), async (req,
 
   if (!hasProjectAccess(req.user!, projectId)) {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
+
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    const newIncident = demoStore.createIncident({
+      projectId,
+      occurredAt,
+      severity,
+      type,
+      description,
+      actionTaken,
+      isLostTime: isActuallyLostTime,
+    });
+    const logSeverity = isActuallyLostTime ? 'alert' : severity === 'Severe' ? 'alert' : 'warning';
+    demoStore.addLog(projectId, {
+      type: 'safety',
+      severity: logSeverity,
+      message: isActuallyLostTime
+        ? `⚠ CRITICAL SAFETY ALERT: Lost-Time incident logged by ${req.user!.name}: "${description}". Safety streak reset.`
+        : `Safety incident logged by ${req.user!.name} (${type}, ${severity}): "${description}".`,
+      user: req.user!.name,
+    });
+    return res.status(201).json({ incident: newIncident });
   }
 
   try {
@@ -82,8 +112,17 @@ router.post('/', requireAuth, requirePermission('incidents:create'), async (req,
 
     return res.status(201).json({ incident: newIncident });
   } catch (error) {
-    console.error('[Incident Create Error]', error);
-    return res.status(500).json({ error: 'Failed to create safety incident' });
+    markDatabaseUnavailable();
+    const newIncident = demoStore.createIncident({
+      projectId,
+      occurredAt,
+      severity,
+      type,
+      description,
+      actionTaken,
+      isLostTime: isActuallyLostTime,
+    });
+    return res.status(201).json({ incident: newIncident });
   }
 });
 
@@ -108,9 +147,32 @@ router.patch('/:id/resolve', requireAuth, async (req, res) => {
 
   const { actionTaken } = parseResult.data;
 
+  const dbUp = await isDatabaseAvailable();
+  const demoInc = demoStore.getIncidents().find(i => i.id === id);
+  if (demoInc || !dbUp) {
+    if (demoInc) {
+      if (!hasProjectAccess(user, demoInc.projectId)) {
+        return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      }
+      const updated = demoStore.resolveIncident(id, actionTaken);
+      demoStore.addLog(demoInc.projectId, {
+        type: 'safety',
+        severity: 'success',
+        message: `Safety Case resolved by ${user.name}: "${actionTaken}".`,
+        user: user.name,
+      });
+      return res.json({ incident: updated });
+    }
+  }
+
   try {
     const existing = await prisma.incident.findUnique({ where: { id } });
     if (!existing || existing.isDeleted) {
+      const demoInc = demoStore.getIncidents().find(i => i.id === id);
+      if (demoInc) {
+        const updated = demoStore.resolveIncident(id, actionTaken);
+        return res.json({ incident: updated });
+      }
       return res.status(404).json({ error: 'Incident not found' });
     }
 
@@ -139,8 +201,9 @@ router.patch('/:id/resolve', requireAuth, async (req, res) => {
 
     return res.json({ incident: updated });
   } catch (error) {
-    console.error('[Incident Resolve Error]', error);
-    return res.status(500).json({ error: 'Failed to resolve safety incident' });
+    markDatabaseUnavailable();
+    const updated = demoStore.resolveIncident(id, actionTaken);
+    return res.json({ incident: updated });
   }
 });
 

@@ -4,14 +4,15 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { requireAuth, hasProjectAccess } from '../auth/middleware.js';
 import { z } from 'zod';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
 const createLogSchema = z.object({
-  projectId: z.string().uuid(),
+  projectId: z.string().min(1),
   type: z.string(),
   severity: z.enum(['info', 'warning', 'alert', 'success']),
   message: z.string().min(2),
@@ -27,6 +28,11 @@ router.get('/', requireAuth, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    return res.json({ logs: demoStore.getLogs(projectId) });
+  }
+
   try {
     const logs = await prisma.activityLog.findMany({
       where: { projectId },
@@ -36,7 +42,8 @@ router.get('/', requireAuth, async (req, res) => {
     });
     return res.json({ logs });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to retrieve activity logs' });
+    markDatabaseUnavailable();
+    return res.json({ logs: demoStore.getLogs(projectId) });
   }
 });
 
@@ -50,6 +57,17 @@ router.post('/', requireAuth, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  if (parseResult.data.projectId === 'proj-demo-001' || !dbUp) {
+    const log = demoStore.addLog(parseResult.data.projectId, {
+      type: parseResult.data.type,
+      severity: parseResult.data.severity,
+      message: parseResult.data.message,
+      user: req.user!.name,
+    });
+    return res.status(201).json({ log });
+  }
+
   try {
     const log = await prisma.activityLog.create({
       data: {
@@ -60,7 +78,14 @@ router.post('/', requireAuth, async (req, res) => {
     });
     return res.status(201).json({ log });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to append log entry' });
+    markDatabaseUnavailable();
+    const log = demoStore.addLog(parseResult.data.projectId, {
+      type: parseResult.data.type,
+      severity: parseResult.data.severity,
+      message: parseResult.data.message,
+      user: req.user!.name,
+    });
+    return res.status(201).json({ log });
   }
 });
 

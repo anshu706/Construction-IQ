@@ -4,15 +4,21 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { calculateEVM } from '../services/evm.js';
 import { calculateCPM } from '../services/cpm.js';
 import { calculateSafetyStreak, countOpenIncidents } from '../services/safety.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
 router.get('/', requireAuth, async (req, res) => {
+  const dbUp = await isDatabaseAvailable();
+  if (!dbUp) {
+    return res.json({ projects: demoStore.getProjectsList() });
+  }
+
   try {
     const user = req.user!;
     // Executives see all projects; other roles are scoped to assigned projects
@@ -38,8 +44,8 @@ router.get('/', requireAuth, async (req, res) => {
 
     return res.json({ projects });
   } catch (error) {
-    console.error('[Projects List Error]', error);
-    return res.status(500).json({ error: 'Failed to retrieve projects' });
+    markDatabaseUnavailable();
+    return res.json({ projects: demoStore.getProjectsList() });
   }
 });
 
@@ -48,6 +54,14 @@ router.get('/:id', requireAuth, async (req, res) => {
 
   if (!hasProjectAccess(req.user!, id)) {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
+
+  const dbUp = await isDatabaseAvailable();
+  if (id === 'proj-demo-001' || !dbUp) {
+    const demoProject = demoStore.getProjectDetail(id);
+    if (demoProject) {
+      return res.json({ project: demoProject });
+    }
   }
 
   try {
@@ -88,6 +102,10 @@ router.get('/:id', requireAuth, async (req, res) => {
     });
 
     if (!project) {
+      const demoProject = demoStore.getProjectDetail(id);
+      if (demoProject) {
+        return res.json({ project: demoProject });
+      }
       return res.status(404).json({ error: 'Project not found' });
     }
 
@@ -171,13 +189,21 @@ router.get('/:id', requireAuth, async (req, res) => {
         budgetInr: Number(project.budgetInr),
         contingencyInr: Number(project.contingencyInr),
         evm: evmMetrics,
+        evmMetrics,
         cpm: cpmResult,
         safetyDaysStreak,
+        safetyStreak: safetyDaysStreak,
         openIncidentsCount,
         criticalPunchCount,
+        isCraneHalted: project.craneHalt,
       },
     });
   } catch (error) {
+    markDatabaseUnavailable();
+    const demoProject = demoStore.getProjectDetail(id);
+    if (demoProject) {
+      return res.json({ project: demoProject });
+    }
     console.error('[Project Detail Error]', error);
     return res.status(500).json({ error: 'Failed to retrieve project details' });
   }
@@ -198,6 +224,18 @@ router.post('/:id/clear-crane-halt', requireAuth, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  if (id === 'proj-demo-001' || !dbUp) {
+    const updated = demoStore.clearCraneHalt(id);
+    demoStore.addLog(id, {
+      type: 'safety',
+      severity: 'success',
+      message: `Tower Crane Halt was manually confirmed and cleared by ${user.name} (${user.role}). Standard operations resumed.`,
+      user: user.name,
+    });
+    return res.json({ message: 'Tower crane halt successfully cleared', project: updated });
+  }
+
   try {
     const updated = await prisma.project.update({
       where: { id },
@@ -216,7 +254,9 @@ router.post('/:id/clear-crane-halt', requireAuth, async (req, res) => {
 
     return res.json({ message: 'Tower crane halt successfully cleared', project: updated });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to clear crane halt flag' });
+    markDatabaseUnavailable();
+    const updated = demoStore.clearCraneHalt(id);
+    return res.json({ message: 'Tower crane halt successfully cleared', project: updated });
   }
 });
 

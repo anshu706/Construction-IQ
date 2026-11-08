@@ -4,10 +4,11 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createInvoiceSchema, updateInvoiceStatusSchema } from '../../shared/schemas.js';
 import { formatINR } from '../../shared/currency.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
@@ -22,6 +23,11 @@ router.get('/', requireAuth, requirePermission('invoices:read'), async (req, res
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    return res.json({ invoices: demoStore.getInvoices(projectId) });
+  }
+
   try {
     const invoices = await prisma.invoice.findMany({
       where: {
@@ -33,7 +39,8 @@ router.get('/', requireAuth, requirePermission('invoices:read'), async (req, res
 
     return res.json({ invoices });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to retrieve invoices' });
+    markDatabaseUnavailable();
+    return res.json({ invoices: demoStore.getInvoices(projectId) });
   }
 });
 
@@ -51,6 +58,18 @@ router.post('/', requireAuth, requirePermission('invoices:create'), async (req, 
 
   if (!hasProjectAccess(req.user!, projectId)) {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
+
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    const newInvoice = demoStore.createInvoice({ projectId, vendor, category, amountInr, invoiceDate, description });
+    demoStore.addLog(projectId, {
+      type: 'financial',
+      severity: 'info',
+      message: `${req.user!.name} created pending invoice ${newInvoice.number} from ${vendor} for ${formatINR(amountInr)}.`,
+      user: req.user!.name,
+    });
+    return res.status(201).json({ invoice: newInvoice });
   }
 
   try {
@@ -83,8 +102,9 @@ router.post('/', requireAuth, requirePermission('invoices:create'), async (req, 
 
     return res.status(201).json({ invoice: newInvoice });
   } catch (error) {
-    console.error('[Invoice Create Error]', error);
-    return res.status(500).json({ error: 'Failed to create invoice' });
+    markDatabaseUnavailable();
+    const newInvoice = demoStore.createInvoice({ projectId, vendor, category, amountInr, invoiceDate, description });
+    return res.status(201).json({ invoice: newInvoice });
   }
 });
 
@@ -109,9 +129,33 @@ router.patch('/:id/status', requireAuth, async (req, res) => {
     });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  const demoInv = demoStore.getInvoices().find(i => i.id === id || i.number === id);
+  if (demoInv || !dbUp) {
+    if (demoInv) {
+      if (!hasProjectAccess(user, demoInv.projectId)) {
+        return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      }
+      const updated = demoStore.updateInvoiceStatus(id, status);
+      const severity = status === 'Approved' || status === 'Paid' ? 'success' : 'warning';
+      demoStore.addLog(demoInv.projectId, {
+        type: 'financial',
+        severity,
+        message: `${user.name} changed status of invoice ${demoInv.number} (${demoInv.vendor}, ${formatINR(Number(demoInv.amountInr))}) to "${status}".`,
+        user: user.name,
+      });
+      return res.json({ invoice: updated });
+    }
+  }
+
   try {
     const existing = await prisma.invoice.findUnique({ where: { id } });
     if (!existing || existing.isDeleted) {
+      const demoInv = demoStore.getInvoices().find(i => i.id === id || i.number === id);
+      if (demoInv) {
+        const updated = demoStore.updateInvoiceStatus(id, status);
+        return res.json({ invoice: updated });
+      }
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
@@ -141,14 +185,27 @@ router.patch('/:id/status', requireAuth, async (req, res) => {
 
     return res.json({ invoice: updatedInvoice });
   } catch (error) {
-    console.error('[Invoice Status Error]', error);
-    return res.status(500).json({ error: 'Failed to update invoice status' });
+    markDatabaseUnavailable();
+    const updated = demoStore.updateInvoiceStatus(id, status);
+    return res.json({ invoice: updated });
   }
 });
 
 // Soft Delete Invoice - FinanceManager only
 router.delete('/:id', requireAuth, requirePermission('invoices:approve'), async (req, res) => {
   const { id } = req.params;
+
+  const dbUp = await isDatabaseAvailable();
+  const demoInv = demoStore.getInvoices().find(i => i.id === id || i.number === id);
+  if (demoInv || !dbUp) {
+    if (demoInv) {
+      if (!hasProjectAccess(req.user!, demoInv.projectId)) {
+        return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      }
+      demoStore.deleteInvoice(id);
+      return res.json({ message: 'Invoice archived successfully' });
+    }
+  }
 
   try {
     const invoice = await prisma.invoice.findUnique({ where: { id } });
@@ -176,7 +233,9 @@ router.delete('/:id', requireAuth, requirePermission('invoices:approve'), async 
 
     return res.json({ message: 'Invoice archived successfully' });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to archive invoice' });
+    markDatabaseUnavailable();
+    demoStore.deleteInvoice(id);
+    return res.json({ message: 'Invoice archived successfully' });
   }
 });
 

@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import {
   createTaskSchema,
@@ -13,6 +13,7 @@ import {
   taskDependencySchema,
 } from '../../shared/schemas.js';
 import { validateNoCycles, CyclicDependencyError } from '../services/cpm.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
@@ -31,6 +32,18 @@ router.post('/', requireAuth, requirePermission('tasks:create'), async (req, res
   // Step 4 Ownership check (IDOR prevention): verify user belongs to target project
   if (!hasProjectAccess(req.user!, taskData.projectId)) {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
+
+  const dbUp = await isDatabaseAvailable();
+  if (taskData.projectId === 'proj-demo-001' || !dbUp) {
+    const newTask = demoStore.createTask({ ...taskData, dependencies });
+    demoStore.addLog(taskData.projectId, {
+      type: 'task_update',
+      severity: 'success',
+      message: `${req.user!.name} created new schedule task "${newTask.name}" assigned to ${newTask.assignedCrew}.`,
+      user: req.user!.name,
+    });
+    return res.status(201).json({ task: newTask });
   }
 
   try {
@@ -88,8 +101,9 @@ router.post('/', requireAuth, requirePermission('tasks:create'), async (req, res
     if (error instanceof CyclicDependencyError) {
       return res.status(422).json({ error: error.message });
     }
-    console.error('[Task Create Error]', error);
-    return res.status(500).json({ error: 'Failed to create task' });
+    markDatabaseUnavailable();
+    const newTask = demoStore.createTask({ ...taskData, dependencies });
+    return res.status(201).json({ task: newTask });
   }
 });
 
@@ -106,12 +120,48 @@ router.patch('/:id/progress', requireAuth, requirePermission('tasks:update_progr
 
   const { progress, status, notes } = parseResult.data;
 
+  const dbUp = await isDatabaseAvailable();
+  const demoTask = demoStore.getTaskById(id);
+  if (demoTask || !dbUp) {
+    if (demoTask) {
+      if (!hasProjectAccess(req.user!, demoTask.projectId)) {
+        return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      }
+
+      if (status === 'Complete' || progress === 100) {
+        const openCriticalPunch = demoStore.getPunchItems(demoTask.projectId).find(
+          p => p.phase === demoTask.phase && p.severity === 'Critical' && p.status !== 'Closed'
+        );
+        if (openCriticalPunch) {
+          return res.status(400).json({
+            error: `Cannot mark task "${demoTask.name}" as Complete: open Critical punch item exists in phase "${demoTask.phase}" ("${openCriticalPunch.item}"). Resolve and close it first.`,
+          });
+        }
+      }
+
+      const updatedTask = demoStore.updateTaskProgress(id, progress, status, notes);
+      demoStore.addLog(demoTask.projectId, {
+        type: 'task_update',
+        severity: 'info',
+        message: `${req.user!.name} updated task "${demoTask.name}" to ${progress}% (${status}).`,
+        user: req.user!.name,
+      });
+
+      return res.json({ task: updatedTask });
+    }
+  }
+
   try {
     const task = await prisma.task.findUnique({
       where: { id },
     });
 
     if (!task) {
+      const demoTask = demoStore.getTaskById(id);
+      if (demoTask) {
+        const updatedTask = demoStore.updateTaskProgress(id, progress, status, notes);
+        return res.json({ task: updatedTask });
+      }
       return res.status(404).json({ error: 'Task not found' });
     }
 
@@ -160,6 +210,12 @@ router.patch('/:id/progress', requireAuth, requirePermission('tasks:update_progr
 
     return res.json({ task: updatedTask });
   } catch (error) {
+    markDatabaseUnavailable();
+    const demoTask = demoStore.getTaskById(id);
+    if (demoTask) {
+      const updatedTask = demoStore.updateTaskProgress(id, progress, status, notes);
+      return res.json({ task: updatedTask });
+    }
     console.error('[Task Progress Update Error]', error);
     return res.status(500).json({ error: 'Failed to update task progress' });
   }
@@ -176,6 +232,17 @@ router.post('/dependencies', requireAuth, requirePermission('tasks:update'), asy
   }
 
   const { taskId, dependsOnTaskId } = parseResult.data;
+
+  const dbUp = await isDatabaseAvailable();
+  const demoTask = demoStore.getTaskById(taskId);
+  if (demoTask || !dbUp) {
+    if (demoTask) {
+      if (!demoTask.dependencies.includes(dependsOnTaskId)) {
+        demoTask.dependencies.push(dependsOnTaskId);
+      }
+      return res.status(201).json({ dependency: { taskId, dependsOnTaskId } });
+    }
+  }
 
   try {
     const task = await prisma.task.findUnique({ where: { id: taskId } });
@@ -218,6 +285,24 @@ router.post('/dependencies', requireAuth, requirePermission('tasks:update'), asy
 router.delete('/:id', requireAuth, requirePermission('tasks:delete'), async (req, res) => {
   const { id } = req.params;
 
+  const dbUp = await isDatabaseAvailable();
+  const demoTask = demoStore.getTaskById(id);
+  if (demoTask || !dbUp) {
+    if (demoTask) {
+      if (!hasProjectAccess(req.user!, demoTask.projectId)) {
+        return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      }
+      demoStore.deleteTask(id);
+      demoStore.addLog(demoTask.projectId, {
+        type: 'task_update',
+        severity: 'warning',
+        message: `${req.user!.name} deleted task "${demoTask.name}".`,
+        user: req.user!.name,
+      });
+      return res.json({ message: 'Task deleted successfully' });
+    }
+  }
+
   try {
     const task = await prisma.task.findUnique({ where: { id } });
     if (!task) return res.status(404).json({ error: 'Task not found' });
@@ -240,7 +325,9 @@ router.delete('/:id', requireAuth, requirePermission('tasks:delete'), async (req
 
     return res.json({ message: 'Task deleted successfully' });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to delete task' });
+    markDatabaseUnavailable();
+    demoStore.deleteTask(id);
+    return res.json({ message: 'Task deleted successfully' });
   }
 });
 

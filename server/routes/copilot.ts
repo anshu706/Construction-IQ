@@ -9,12 +9,13 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requirePermission } from '../auth/middleware.js';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { config } from '../config.js';
 import { calculateEVM } from '../services/evm.js';
 import { calculateSafetyStreak } from '../services/safety.js';
 import { getCachedWeather, fetchWeather } from '../services/weather.js';
 import { formatINRCompact } from '../../shared/currency.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
@@ -42,38 +43,68 @@ function checkCopilotRateLimit(ip: string): boolean {
 }
 
 async function buildContext(projectId: string, userRole: string): Promise<string> {
-  const [project, tasks, invoices, incidents] = await Promise.all([
-    prisma.project.findUnique({ where: { id: projectId } }),
-    prisma.task.findMany({ where: { projectId } }),
-    prisma.invoice.findMany({ where: { projectId, isDeleted: false } }),
-    prisma.incident.findMany({ where: { projectId, isDeleted: false } }),
-  ]);
+  let project: any;
+  let tasks: any[];
+  let invoices: any[];
+  let incidents: any[];
+
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    const demo = demoStore.getProjectDetail(projectId);
+    project = demo;
+    tasks = demo.tasks;
+    invoices = demo.invoices;
+    incidents = demo.incidents;
+  } else {
+    try {
+      const [p, t, inv, inc] = await Promise.all([
+        prisma.project.findUnique({ where: { id: projectId } }),
+        prisma.task.findMany({ where: { projectId } }),
+        prisma.invoice.findMany({ where: { projectId, isDeleted: false } }),
+        prisma.incident.findMany({ where: { projectId, isDeleted: false } }),
+      ]);
+      project = p;
+      tasks = t;
+      invoices = inv;
+      incidents = inc;
+    } catch {
+      markDatabaseUnavailable();
+      const demo = demoStore.getProjectDetail(projectId);
+      project = demo;
+      tasks = demo.tasks;
+      invoices = demo.invoices;
+      incidents = demo.incidents;
+    }
+  }
 
   if (!project) return 'Project not found.';
 
   const weather = getCachedWeather() ?? await fetchWeather();
 
+  const statusDateStr = project.statusDate instanceof Date ? project.statusDate.toISOString() : String(project.statusDate);
+  const startDateStr = project.startDate instanceof Date ? project.startDate.toISOString() : String(project.startDate);
+
   const evm = calculateEVM(
-    { budgetInr: Number(project.budgetInr), statusDate: project.statusDate.toISOString() },
+    { budgetInr: Number(project.budgetInr), statusDate: statusDateStr },
     tasks.map(t => ({
       id: t.id,
-      startDate: t.startDate.toISOString(),
-      endDate: t.endDate.toISOString(),
+      startDate: t.startDate instanceof Date ? t.startDate.toISOString() : String(t.startDate),
+      endDate: t.endDate instanceof Date ? t.endDate.toISOString() : String(t.endDate),
       progress: t.progress,
-      budgetedCostInr: Number(t.budgetedCostInr),
+      budgetedCostInr: Number(t.budgetedCostInr || 0),
     })),
     invoices.map(i => ({
       id: i.id,
-      amountInr: Number(i.amountInr),
+      amountInr: Number(i.amountInr || i.amount || 0),
       status: i.status as 'Pending' | 'Approved' | 'Paid' | 'Rejected',
     }))
   );
 
   const safetyStreak = calculateSafetyStreak(
-    { startDate: project.startDate.toISOString(), statusDate: project.statusDate.toISOString() },
+    { startDate: startDateStr, statusDate: statusDateStr },
     incidents.map(i => ({
       id: i.id,
-      occurredAt: i.occurredAt.toISOString(),
+      occurredAt: i.occurredAt instanceof Date ? i.occurredAt.toISOString() : String(i.occurredAt || i.date),
       severity: i.severity,
       type: i.type,
       status: i.status,

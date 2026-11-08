@@ -8,8 +8,9 @@
 
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../auth/middleware.js';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { fetchWeather } from '../services/weather.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
@@ -20,10 +21,20 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
 
     // If a project is specified and crane halt risk is detected, persist it
     if (projectId && weather.craneHaltRisk) {
-      await prisma.project.updateMany({
-        where: { id: projectId, craneHalt: false },
-        data: { craneHalt: true },
-      });
+      const dbUp = await isDatabaseAvailable();
+      if (projectId === 'proj-demo-001' || !dbUp) {
+        demoStore.setCraneHalt(projectId, true);
+      } else {
+        try {
+          await prisma.project.updateMany({
+            where: { id: projectId, craneHalt: false },
+            data: { craneHalt: true },
+          });
+        } catch {
+          markDatabaseUnavailable();
+          demoStore.setCraneHalt(projectId, true);
+        }
+      }
     }
 
     res.json({ weather });

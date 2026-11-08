@@ -4,9 +4,10 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { prisma, isDatabaseAvailable, markDatabaseUnavailable } from '../db.js';
 import { requireAuth, requirePermission, hasProjectAccess } from '../auth/middleware.js';
 import { createPunchItemSchema, updatePunchStatusSchema } from '../../shared/schemas.js';
+import { demoStore } from '../services/demoStore.js';
 
 const router = Router();
 
@@ -20,6 +21,11 @@ router.get('/', requireAuth, requirePermission('punch_items:read'), async (req, 
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
   }
 
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    return res.json({ punchItems: demoStore.getPunchItems(projectId) });
+  }
+
   try {
     const items = await prisma.punchItem.findMany({
       where: { projectId },
@@ -29,7 +35,8 @@ router.get('/', requireAuth, requirePermission('punch_items:read'), async (req, 
 
     return res.json({ punchItems: items });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to retrieve punch items' });
+    markDatabaseUnavailable();
+    return res.json({ punchItems: demoStore.getPunchItems(projectId) });
   }
 });
 
@@ -46,6 +53,27 @@ router.post('/', requireAuth, requirePermission('punch_items:create'), async (re
 
   if (!hasProjectAccess(req.user!, projectId)) {
     return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+  }
+
+  const dbUp = await isDatabaseAvailable();
+  if (projectId === 'proj-demo-001' || !dbUp) {
+    const newPunch = demoStore.createPunchItem({
+      projectId,
+      item,
+      location,
+      phase,
+      severity,
+      subcontractor,
+      resolutionNotes,
+    });
+    const logSeverity = severity === 'Critical' ? 'alert' : 'warning';
+    demoStore.addLog(projectId, {
+      type: 'general',
+      severity: logSeverity,
+      message: `${req.user!.name} logged ${severity} punch item: "${item}" at ${location}.`,
+      user: req.user!.name,
+    });
+    return res.status(201).json({ punchItem: newPunch });
   }
 
   try {
@@ -77,8 +105,17 @@ router.post('/', requireAuth, requirePermission('punch_items:create'), async (re
 
     return res.status(201).json({ punchItem: newPunch });
   } catch (error) {
-    console.error('[Punch Create Error]', error);
-    return res.status(500).json({ error: 'Failed to create punch item' });
+    markDatabaseUnavailable();
+    const newPunch = demoStore.createPunchItem({
+      projectId,
+      item,
+      location,
+      phase,
+      severity,
+      subcontractor,
+      resolutionNotes,
+    });
+    return res.status(201).json({ punchItem: newPunch });
   }
 });
 
@@ -94,9 +131,34 @@ router.patch('/:id/status', requireAuth, requirePermission('punch_items:update')
 
   const { status, resolutionNotes } = parseResult.data;
 
+  const dbUp = await isDatabaseAvailable();
+  const demoPunch = demoStore.getPunchItems().find(p => p.id === id);
+  if (demoPunch || !dbUp) {
+    if (demoPunch) {
+      if (!hasProjectAccess(req.user!, demoPunch.projectId)) {
+        return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
+      }
+      const updated = demoStore.updatePunchItemStatus(id, status, resolutionNotes);
+      demoStore.addLog(demoPunch.projectId, {
+        type: 'general',
+        severity: status === 'Closed' ? 'success' : 'info',
+        message: `${req.user!.name} updated punch item "${demoPunch.item}" to ${status}.`,
+        user: req.user!.name,
+      });
+      return res.json({ punchItem: updated });
+    }
+  }
+
   try {
     const punch = await prisma.punchItem.findUnique({ where: { id } });
-    if (!punch) return res.status(404).json({ error: 'Punch item not found' });
+    if (!punch) {
+      const demoPunch = demoStore.getPunchItems().find(p => p.id === id);
+      if (demoPunch) {
+        const updated = demoStore.updatePunchItemStatus(id, status, resolutionNotes);
+        return res.json({ punchItem: updated });
+      }
+      return res.status(404).json({ error: 'Punch item not found' });
+    }
 
     if (!hasProjectAccess(req.user!, punch.projectId)) {
       return res.status(403).json({ error: 'Forbidden: Access to this project is denied' });
@@ -123,7 +185,9 @@ router.patch('/:id/status', requireAuth, requirePermission('punch_items:update')
 
     return res.json({ punchItem: updated });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to update punch item' });
+    markDatabaseUnavailable();
+    const updated = demoStore.updatePunchItemStatus(id, status, resolutionNotes);
+    return res.json({ punchItem: updated });
   }
 });
 
