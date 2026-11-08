@@ -11,6 +11,7 @@ import { Briefcase, HardHat, IndianRupee, Award, Shield } from 'lucide-react';
 interface RoleViewSelectorProps {
   currentRole: UserRole;
   onRoleChange: (role: UserRole) => void;
+  loggedInRole?: UserRole;
 }
 
 const getRoleIcon = (role: UserRole) => {
@@ -28,8 +29,15 @@ const getRoleIcon = (role: UserRole) => {
   }
 };
 
-export const RoleViewSelector: React.FC<RoleViewSelectorProps> = ({ currentRole, onRoleChange }) => {
-  const activeProfile = USER_PROFILES.find(p => p.role === currentRole) || USER_PROFILES[0];
+export const RoleViewSelector: React.FC<RoleViewSelectorProps> = ({ currentRole, onRoleChange, loggedInRole }) => {
+  const isAdmin = loggedInRole === 'ProjectManager';
+
+  // If non-admin (crews/employees), they only see other non-admin crew profiles; Admin profile is filtered out
+  const visibleProfiles = isAdmin
+    ? USER_PROFILES
+    : USER_PROFILES.filter(p => p.role !== 'ProjectManager');
+
+  const activeProfile = visibleProfiles.find(p => p.role === currentRole) || visibleProfiles[0] || USER_PROFILES[0];
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full shadow-xs" id="role-view-selector">
@@ -59,7 +67,7 @@ export const RoleViewSelector: React.FC<RoleViewSelectorProps> = ({ currentRole,
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5">
         <span className="text-xs text-slate-500 font-semibold font-sans">Perspective:</span>
         <div className="flex flex-wrap gap-1 bg-slate-100/80 p-1 rounded-lg border border-slate-200/60">
-          {USER_PROFILES.map(profile => {
+          {visibleProfiles.map(profile => {
             const isActive = profile.role === currentRole;
             return (
               <button

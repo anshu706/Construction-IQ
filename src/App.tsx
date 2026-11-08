@@ -73,6 +73,8 @@ export default function App() {
     return 'admin';
   });
 
+  const isAdmin = user?.role === 'ProjectManager';
+
   useEffect(() => {
     if (user?.role === 'ProjectManager') {
       setDashboardMode('admin');
@@ -82,6 +84,10 @@ export default function App() {
   }, [user?.role]);
 
   const handleSetDashboardMode = (mode: 'admin' | 'employee') => {
+    // If not admin, do not allow switching to admin mode
+    if (mode === 'admin' && !isAdmin) {
+      return;
+    }
     setDashboardMode(mode);
     localStorage.setItem('constructiq_dashboard_mode', mode);
   };
@@ -455,33 +461,35 @@ export default function App() {
           <p className="text-[11px] text-slate-400">Phase 2 • 67% Completed</p>
         </div>
 
-        {/* Portal Mode Switcher */}
-        <div className="px-3 mb-2">
-          <div className="bg-slate-800/90 p-1 rounded-lg border border-slate-700 flex text-xs">
-            <button
-              onClick={() => handleSetDashboardMode('admin')}
-              className={`flex-1 py-1.5 px-2 rounded-md font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                dashboardMode === 'admin'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </button>
-            <button
-              onClick={() => handleSetDashboardMode('employee')}
-              className={`flex-1 py-1.5 px-2 rounded-md font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                dashboardMode === 'employee'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <HardHat className="w-3.5 h-3.5" />
-              <span>Crew</span>
-            </button>
+        {/* Portal Mode Switcher (Visible to Admin to toggle between views; hidden for Crews) */}
+        {isAdmin && (
+          <div className="px-3 mb-2">
+            <div className="bg-slate-800/90 p-1 rounded-lg border border-slate-700 flex text-xs">
+              <button
+                onClick={() => handleSetDashboardMode('admin')}
+                className={`flex-1 py-1.5 px-2 rounded-md font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  dashboardMode === 'admin'
+                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Admin</span>
+              </button>
+              <button
+                onClick={() => handleSetDashboardMode('employee')}
+                className={`flex-1 py-1.5 px-2 rounded-md font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  dashboardMode === 'employee'
+                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <HardHat className="w-3.5 h-3.5" />
+                <span>Crew</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Sections */}
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-5 scrollbar-none">
@@ -691,12 +699,16 @@ export default function App() {
               onUpdatePunchStatus={handleUpdatePunchStatus}
               onLogOperationsFeed={handleLogOperationsFeed}
               currentUser={user}
-              onSwitchToAdmin={() => handleSetDashboardMode('admin')}
+              onSwitchToAdmin={isAdmin ? () => handleSetDashboardMode('admin') : undefined}
             />
           ) : (
             <>
               {/* Stakeholder View Perspective Bar */}
-              <RoleViewSelector currentRole={currentRole} onRoleChange={setCurrentRole} />
+              <RoleViewSelector
+                currentRole={currentRole}
+                onRoleChange={setCurrentRole}
+                loggedInRole={user?.role as UserRole}
+              />
 
               {/* Modern KPI Metric Cards */}
               <MetricCard
